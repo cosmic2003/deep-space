@@ -1,3 +1,5 @@
+"use client";
+
 import type { RocketConfiguration } from "@/lib/sources/launchLibrary";
 import { RocketModel } from "./RocketModel";
 import { getShape } from "@/lib/rocketShape";
@@ -6,6 +8,8 @@ import { lookupRocket } from "@/lib/rocketKnowledge";
 interface Props {
   rocket: RocketConfiguration;
   accentColor?: string;
+  /** When provided, renders an expand button on the model area that calls this. */
+  onExpand?: () => void;
 }
 
 function fmtNum(n: number | null | undefined, decimals = 1): string | null {
@@ -21,7 +25,7 @@ function fmtPayload(kg: number | null | undefined): string | null {
   return `${kg.toLocaleString("en-US")} kg`;
 }
 
-export function RocketSpecCard({ rocket, accentColor = "#38bdf8" }: Props) {
+export function RocketSpecCard({ rocket, accentColor = "#38bdf8", onExpand }: Props) {
   const name = rocket.full_name ?? rocket.name;
   const length = rocket.length;
   const diameter = rocket.diameter;
@@ -58,6 +62,18 @@ export function RocketSpecCard({ rocket, accentColor = "#38bdf8" }: Props) {
           <span className="absolute top-2 right-2 rounded-full bg-zinc-900/80 backdrop-blur px-2 py-0.5 text-[10px] font-mono text-zinc-300 ring-1 ring-inset ring-zinc-700">
             {rocket.total_launch_count}회
           </span>
+        )}
+        {onExpand && (
+          <button
+            onClick={onExpand}
+            title="확대"
+            aria-label="확대"
+            className="absolute bottom-2 right-2 inline-flex items-center justify-center rounded-md bg-zinc-900/80 backdrop-blur p-1.5 text-zinc-300 ring-1 ring-inset ring-zinc-700 hover:text-sky-300 hover:ring-sky-500/50 hover:bg-zinc-800 transition-colors"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M3 8V3h5M21 8V3h-5M3 16v5h5M21 16v5h-5" />
+            </svg>
+          </button>
         )}
       </div>
 

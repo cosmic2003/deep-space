@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { groupRocketsByProvider, type Launch } from "@/lib/sources/launchLibrary";
 import { providerColor } from "@/lib/providerColors";
-import { RocketSpecCard } from "./RocketSpecCard";
+import { RocketGallery } from "./RocketGallery";
 
 interface Props {
   launches: Launch[];
@@ -146,15 +146,7 @@ function ProviderDetail({
         </span>
       </div>
 
-      <div className="space-y-3">
-        {provider.rockets.map((rocket, i) => (
-          <RocketSpecCard
-            key={`${rocket.id ?? rocket.full_name ?? rocket.name}-${i}`}
-            rocket={rocket}
-            accentColor={color}
-          />
-        ))}
-      </div>
+      <RocketGallery rockets={provider.rockets} accentColor={color} />
     </div>
   );
 }

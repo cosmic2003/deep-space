@@ -28,6 +28,8 @@ interface CommonProps {
   accentColor?: string;
   shape?: ShapeSpec;
   gltfUrl?: string;
+  /** Allow scroll-wheel zoom on OrbitControls. Default false. */
+  enableZoom?: boolean;
 }
 
 function bodyColor(shape?: ShapeSpec): string {
@@ -748,6 +750,7 @@ export function RocketModel({
   accentColor = "#38bdf8",
   shape,
   gltfUrl,
+  enableZoom = false,
   className = "",
   envPreset = "warehouse",
 }: RocketModelProps) {
@@ -792,11 +795,14 @@ export function RocketModel({
           />
 
           <OrbitControls
-            enableZoom={false}
+            enableZoom={enableZoom}
             enablePan={false}
+            minDistance={2.2}
+            maxDistance={12}
             minPolarAngle={Math.PI * 0.15}
             maxPolarAngle={Math.PI * 0.85}
             rotateSpeed={0.6}
+            zoomSpeed={0.8}
           />
         </Suspense>
       </Canvas>
