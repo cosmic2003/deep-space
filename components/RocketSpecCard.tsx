@@ -46,6 +46,7 @@ export function RocketSpecCard({ rocket, accentColor = "#38bdf8" }: Props) {
           diameter={diameter}
           accentColor={accentColor}
           shape={shape}
+          gltfUrl={shape.gltfUrl}
           className="absolute inset-0"
         />
         {reusable && (

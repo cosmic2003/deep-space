@@ -11,6 +11,8 @@ export interface ShapeSpec {
   type: ShapeType;
   srbCount?: number;
   bodyColor?: string;
+  /** Optional GLB/GLTF URL. When set, RocketModel loads this instead of the procedural shape. */
+  gltfUrl?: string;
 }
 
 export function getShape(config: RocketConfiguration): ShapeSpec {
