@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { RocketConfiguration } from "@/lib/sources/launchLibrary";
 import { getShape } from "@/lib/rocketShape";
 import { lookupRocket } from "@/lib/rocketKnowledge";
@@ -26,6 +27,12 @@ function fmtPayload(kg: number | null | undefined): string | null {
 }
 
 export function RocketDetailModal({ rocket, accentColor, onClose }: Props) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -42,6 +49,8 @@ export function RocketDetailModal({ rocket, accentColor, onClose }: Props) {
     };
   }, [onClose]);
 
+  if (!mounted) return null;
+
   const name = rocket.full_name ?? rocket.name;
   const shape = getShape(rocket);
   const knowledge = lookupRocket(name, rocket.family);
@@ -50,9 +59,9 @@ export function RocketDetailModal({ rocket, accentColor, onClose }: Props) {
       ? (rocket.successful_launches / rocket.total_launch_count) * 100
       : null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-3 sm:p-6 animate-[fadeIn_120ms_ease-out]"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-md p-3 sm:p-6 animate-[fadeIn_120ms_ease-out]"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -188,7 +197,8 @@ export function RocketDetailModal({ rocket, accentColor, onClose }: Props) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
