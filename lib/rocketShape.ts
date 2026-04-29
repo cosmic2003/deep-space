@@ -26,7 +26,7 @@ export function getShape(config: RocketConfiguration): ShapeSpec {
     return { type: "starship", bodyColor: "#cbd5e1", engineCount: 33 };
   }
   if (name.includes("falcon heavy")) {
-    return { type: "falcon-heavy" };
+    return { type: "falcon-heavy", gltfUrl: "/models/falcon-heavy.glb" };
   }
   if (name.includes("falcon 9")) {
     return { type: "single", engineCount: 9 };
