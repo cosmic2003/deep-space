@@ -42,8 +42,28 @@ export function RocketSpecCard({ rocket, accentColor = "#38bdf8", onExpand }: Pr
   const shape = getShape(rocket);
   const knowledge = lookupRocket(name, rocket.family);
 
+  const clickable = !!onExpand;
   return (
-    <div className="rounded-xl border border-zinc-700/60 bg-zinc-800/60 ring-1 ring-inset ring-white/5 overflow-hidden">
+    <div
+      className={`rounded-xl border border-zinc-700/60 bg-zinc-800/60 ring-1 ring-inset ring-white/5 overflow-hidden ${
+        clickable
+          ? "cursor-pointer transition-all hover:border-zinc-500/70 hover:ring-white/10"
+          : ""
+      }`}
+      onClick={clickable ? onExpand : undefined}
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={
+        clickable
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onExpand?.();
+              }
+            }
+          : undefined
+      }
+    >
       <div className="relative bg-gradient-to-b from-zinc-900 to-zinc-950 h-80">
         <RocketModel
           length={length}
@@ -65,7 +85,10 @@ export function RocketSpecCard({ rocket, accentColor = "#38bdf8", onExpand }: Pr
         )}
         {onExpand && (
           <button
-            onClick={onExpand}
+            onClick={(e) => {
+              e.stopPropagation();
+              onExpand();
+            }}
             title="확대"
             aria-label="확대"
             className="absolute bottom-2 right-2 inline-flex items-center justify-center rounded-md bg-zinc-900/80 backdrop-blur p-1.5 text-zinc-300 ring-1 ring-inset ring-zinc-700 hover:text-sky-300 hover:ring-sky-500/50 hover:bg-zinc-800 transition-colors"

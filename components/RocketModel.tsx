@@ -30,6 +30,9 @@ interface CommonProps {
   gltfUrl?: string;
   /** Allow scroll-wheel zoom on OrbitControls. Default false. */
   enableZoom?: boolean;
+  /** Open the polar (vertical) tilt range to almost full sphere instead of the
+   *  default narrow band. Useful in modal/expanded views. */
+  wideTilt?: boolean;
 }
 
 function bodyColor(shape?: ShapeSpec): string {
@@ -751,6 +754,7 @@ export function RocketModel({
   shape,
   gltfUrl,
   enableZoom = false,
+  wideTilt = false,
   className = "",
   envPreset = "warehouse",
 }: RocketModelProps) {
@@ -799,8 +803,8 @@ export function RocketModel({
             enablePan={false}
             minDistance={2.2}
             maxDistance={12}
-            minPolarAngle={Math.PI * 0.15}
-            maxPolarAngle={Math.PI * 0.85}
+            minPolarAngle={wideTilt ? Math.PI * 0.05 : Math.PI * 0.15}
+            maxPolarAngle={wideTilt ? Math.PI * 0.95 : Math.PI * 0.85}
             rotateSpeed={0.6}
             zoomSpeed={0.8}
           />
