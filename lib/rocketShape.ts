@@ -29,7 +29,7 @@ export function getShape(config: RocketConfiguration): ShapeSpec {
     return { type: "falcon-heavy", gltfUrl: "/models/falcon-heavy.glb" };
   }
   if (name.includes("falcon 9")) {
-    return { type: "single", engineCount: 9 };
+    return { type: "single", engineCount: 9, gltfUrl: "/models/falcon9.glb" };
   }
   if (family.includes("soyuz") || name.includes("soyuz")) {
     if (name.includes("soyuz-5") || name.includes("soyuz 5")) {
