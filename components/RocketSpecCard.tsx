@@ -44,7 +44,7 @@ export function RocketSpecCard({ rocket, accentColor = "#38bdf8", onExpand }: Pr
 
   return (
     <div className="rounded-xl border border-zinc-700/60 bg-zinc-800/60 ring-1 ring-inset ring-white/5 overflow-hidden">
-      <div className="relative bg-gradient-to-b from-zinc-900 to-zinc-950 h-64">
+      <div className="relative bg-gradient-to-b from-zinc-900 to-zinc-950 h-80">
         <RocketModel
           length={length}
           diameter={diameter}
@@ -77,18 +77,18 @@ export function RocketSpecCard({ rocket, accentColor = "#38bdf8", onExpand }: Pr
         )}
       </div>
 
-      <div className="p-5">
-        <h4 className="text-lg font-bold text-zinc-50 leading-tight tracking-tight truncate" title={name}>
+      <div className="p-6">
+        <h4 className="text-xl font-bold text-zinc-50 leading-tight tracking-tight truncate" title={name}>
           {name}
         </h4>
         {(knowledge?.manufacturer || (rocket.family && rocket.family !== name)) && (
-          <p className="text-sm text-zinc-400 mt-1 truncate">
+          <p className="text-base text-zinc-400 mt-1.5 truncate">
             {knowledge?.manufacturer ?? rocket.family}
           </p>
         )}
 
         {/* Numerical specs */}
-        <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
+        <dl className="mt-5 grid grid-cols-2 gap-x-5 gap-y-3.5 text-sm">
           <SpecRow label="길이" value={length != null ? `${fmtNum(length)} m` : null} />
           <SpecRow label="직경" value={diameter != null ? `${fmtNum(diameter)} m` : null} />
           <SpecRow label="질량" value={mass != null ? `${fmtNum(mass, 0)} t` : null} />
@@ -107,7 +107,7 @@ export function RocketSpecCard({ rocket, accentColor = "#38bdf8", onExpand }: Pr
 
         {/* Engines & propellant */}
         {(knowledge?.firstStageEngines || knowledge?.upperStageEngines) && (
-          <div className="mt-4 pt-3 border-t border-zinc-700/50 space-y-2.5">
+          <div className="mt-5 pt-4 border-t border-zinc-700/50 space-y-3.5">
             {knowledge.firstStageEngines && (
               <EngineBlock
                 label="1단"
@@ -123,7 +123,7 @@ export function RocketSpecCard({ rocket, accentColor = "#38bdf8", onExpand }: Pr
               />
             )}
             {knowledge.notes && (
-              <p className="text-[11px] text-zinc-400 italic leading-snug pt-1">
+              <p className="text-sm text-zinc-400 italic leading-snug pt-1">
                 {knowledge.notes}
               </p>
             )}
@@ -148,11 +148,11 @@ function SpecRow({
   if (!value) return null;
   return (
     <div
-      className={`flex items-baseline justify-between gap-2 ${span2 ? "col-span-2 pt-2 mt-1 border-t border-zinc-700/50" : ""}`}
+      className={`flex items-baseline justify-between gap-2 ${span2 ? "col-span-2 pt-3 mt-1 border-t border-zinc-700/50" : ""}`}
     >
-      <dt className="text-zinc-500 uppercase tracking-wider text-[11px]">{label}</dt>
+      <dt className="text-zinc-500 uppercase tracking-wider text-xs">{label}</dt>
       <dd
-        className={`font-mono tabular-nums truncate ${accent ? "text-sky-300 font-semibold" : "text-zinc-100"}`}
+        className={`font-mono tabular-nums truncate ${accent ? "text-sky-300 font-semibold text-base" : "text-zinc-100"}`}
       >
         {value}
       </dd>
@@ -171,18 +171,18 @@ function EngineBlock({
 }) {
   return (
     <div>
-      <div className="flex items-baseline gap-2.5 mb-1">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 shrink-0 min-w-[26px]">
+      <div className="flex items-baseline gap-3 mb-1.5">
+        <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 shrink-0 min-w-[32px]">
           {label}
         </span>
-        <span className="text-sm text-zinc-100 leading-snug">
+        <span className="text-base text-zinc-100 leading-snug">
           {engines}
         </span>
       </div>
       {propellant && (
-        <div className="flex items-baseline gap-2.5 pl-[34px]">
-          <span className="text-[11px] text-zinc-500">연료</span>
-          <span className="text-xs text-zinc-300 font-mono">{propellant}</span>
+        <div className="flex items-baseline gap-3 pl-[44px]">
+          <span className="text-xs text-zinc-500">연료</span>
+          <span className="text-sm text-zinc-300 font-mono">{propellant}</span>
         </div>
       )}
     </div>

@@ -763,7 +763,7 @@ export function RocketModel({
       onPointerLeave={() => setIsHovering(false)}
     >
       <Canvas
-        camera={{ position: [3.6, 0.8, 3.6], fov: 32 }}
+        camera={{ position: [4.5, 0.8, 4.5], fov: 38 }}
         dpr={[1, 2]}
         gl={{ antialias: true, alpha: true }}
         style={{ background: "transparent" }}
