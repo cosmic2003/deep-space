@@ -50,9 +50,11 @@ export default async function Home({ searchParams }: PageProps) {
               </div>
 
               {imminent > 0 && (
-                <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-red-500/10 px-3 py-1 text-xs text-red-300 ring-1 ring-inset ring-red-500/30">
-                  <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
-                  {imminent}개 발사 임박 (6시간 이내)
+                <div className="mt-5 inline-flex items-center gap-2.5 rounded-full bg-red-500/10 px-5 py-2.5 text-base font-semibold text-red-300 ring-1 ring-inset ring-red-500/30">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-400 animate-pulse" />
+                  <span className="font-mono tabular-nums text-red-200">{imminent}</span>
+                  <span>개 발사 임박</span>
+                  <span className="text-red-400/70 font-normal">· 6시간 이내</span>
                 </div>
               )}
             </section>
