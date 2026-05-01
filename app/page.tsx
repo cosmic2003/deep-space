@@ -1,6 +1,7 @@
 import { Header } from "@/components/Header";
 import { LaunchCard } from "@/components/LaunchCard";
 import { Sidebar } from "@/components/Sidebar";
+import { Starfield } from "@/components/Starfield";
 import { getUpcomingLaunches } from "@/lib/sources/launchLibrary";
 
 export const revalidate = 300;
@@ -19,6 +20,7 @@ export default async function Home({ searchParams }: PageProps) {
 
   return (
     <div className="min-h-screen">
+      <Starfield />
       <Header active="aerospace" />
 
       <div className="w-full px-6 lg:px-8 py-10">

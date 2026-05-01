@@ -16,6 +16,72 @@ export interface NewsItem {
   topics: Topic[];
   companies: string[];
   commentsUrl?: string;
+  /** Auto-extracted Korean event tag (e.g. "실적", "신제품") if detected. */
+  actionLabel?: string;
+}
+
+const ACTION_PATTERNS: Array<[string, RegExp]> = [
+  ["실적/매출", /\b(earning|revenue|profit|loss|beat|miss|forecast|guidance|q[1-4] result|quarterly)\b/i],
+  ["신제품/발표", /\b(launch(es|ed|ing)?|unveil|announce|release|debut|introduce|reveal)\b/i],
+  ["양산/수율", /\b(production|mass produce|ramp|yield|fab |output|tape ?out)\b/i],
+  ["공급/품귀", /\b(shortage|supply|demand|allocation|capacity|backlog|sold out)\b/i],
+  ["인수합병", /\b(acqui|merger|m&a|takeover|buyout|acquired)\b/i],
+  ["투자/자금", /\b(invest|fund|capex|raise.{0,8}billion|billion.{0,8}invest)\b/i],
+  ["협력/파트너십", /\b(partner|collab|deal with|sign with|order from)\b/i],
+  ["규제/법적", /\b(lawsuit|regulat|ban|sanction|fine|court|antitrust|tariff)\b/i],
+  ["중국/지정학", /\b(china|chinese|smic|huawei|export control|chip war)\b/i],
+];
+
+export function detectAction(title: string): string | undefined {
+  for (const [label, re] of ACTION_PATTERNS) {
+    if (re.test(title)) return label;
+  }
+  return undefined;
+}
+
+export function googleTranslateUrl(text: string): string {
+  return `https://translate.google.com/?sl=en&tl=ko&op=translate&text=${encodeURIComponent(text)}`;
+}
+
+export function groupByTopic(items: NewsItem[]): Map<Topic, NewsItem[]> {
+  const map = new Map<Topic, NewsItem[]>();
+  for (const item of items) {
+    // Use first non-general topic, fall back to general
+    const primary = item.topics.find((t) => t !== "general") ?? "general";
+    if (!map.has(primary)) map.set(primary, []);
+    map.get(primary)!.push(item);
+  }
+  return map;
+}
+
+export interface TrendSummary {
+  totalSignals: number;
+  topCompanies: Array<{ name: string; count: number }>;
+  topTopic: { topic: Topic; count: number } | null;
+}
+
+export function summarizeTrends(items: NewsItem[]): TrendSummary {
+  const companyCounts = new Map<string, number>();
+  const topicCounts = new Map<Topic, number>();
+  for (const item of items) {
+    for (const c of item.companies) {
+      companyCounts.set(c, (companyCounts.get(c) ?? 0) + 1);
+    }
+    for (const t of item.topics) {
+      if (t === "general") continue;
+      topicCounts.set(t, (topicCounts.get(t) ?? 0) + 1);
+    }
+  }
+  const topCompanies = Array.from(companyCounts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3);
+  const topTopicEntry = Array.from(topicCounts.entries()).sort((a, b) => b[1] - a[1])[0];
+  return {
+    totalSignals: items.length,
+    topCompanies,
+    topTopic: topTopicEntry ? { topic: topTopicEntry[0], count: topTopicEntry[1] } : null,
+  };
 }
 
 export const TOPIC_LABELS: Record<Topic, string> = {
@@ -106,6 +172,7 @@ export async function getSemiNews(
       topics: detectTopics(text),
       companies: detectCompanies(text),
       commentsUrl: `https://news.ycombinator.com/item?id=${h.story_id ?? h.objectID}`,
+      actionLabel: detectAction(h.title),
     });
   }
 
@@ -129,6 +196,7 @@ export async function getSemiNews(
       topics: detectTopics(text),
       companies: detectCompanies(text),
       commentsUrl: `https://www.reddit.com${r.permalink}`,
+      actionLabel: detectAction(r.title),
     });
   }
 

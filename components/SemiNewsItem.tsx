@@ -1,5 +1,5 @@
 import type { NewsItem, Topic } from "@/lib/sources/semiNews";
-import { TOPIC_LABELS } from "@/lib/sources/semiNews";
+import { TOPIC_LABELS, googleTranslateUrl } from "@/lib/sources/semiNews";
 
 interface Props {
   item: NewsItem;
@@ -33,18 +33,36 @@ function SourceBadge({ source, subreddit }: { source: NewsItem["source"]; subred
 
 export function SemiNewsItem({ item }: Props) {
   const visibleTopics = item.topics.filter((t): t is Exclude<Topic, "general"> => t !== "general");
+  const koreanContext: string[] = [];
+  if (item.companies.length > 0) koreanContext.push(item.companies.join(" · "));
+  if (item.actionLabel) koreanContext.push(item.actionLabel);
+  if (koreanContext.length === 0 && visibleTopics.length > 0) {
+    koreanContext.push(visibleTopics.map((t) => TOPIC_LABELS[t]).join(" · "));
+  }
+
   return (
     <article className="rounded-xl border border-zinc-700/40 bg-zinc-800/40 hover:bg-zinc-800/70 hover:border-zinc-600/70 transition-all px-5 py-4">
-      <div className="flex items-center gap-2 flex-wrap mb-2">
+      {/* Korean context line */}
+      {koreanContext.length > 0 && (
+        <div className="text-sm font-semibold text-amber-300/95 mb-1.5 truncate">
+          {koreanContext.join(" — ")}
+        </div>
+      )}
+
+      {/* English title (browser auto-translate friendly via lang="en") */}
+      <a
+        href={item.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        lang="en"
+        className="block text-base font-medium text-zinc-100 hover:text-amber-300 transition-colors leading-snug"
+      >
+        {item.title}
+      </a>
+
+      {/* Tags + meta */}
+      <div className="mt-2.5 flex items-center gap-2 flex-wrap">
         <SourceBadge source={item.source} subreddit={item.subreddit} />
-        {item.companies.map((c) => (
-          <span
-            key={c}
-            className="rounded-md bg-zinc-700/60 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-100 ring-1 ring-inset ring-zinc-600/60"
-          >
-            {c}
-          </span>
-        ))}
         {visibleTopics.map((t) => (
           <span
             key={t}
@@ -53,17 +71,7 @@ export function SemiNewsItem({ item }: Props) {
             {TOPIC_LABELS[t]}
           </span>
         ))}
-      </div>
-      <a
-        href={item.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block text-base font-medium text-zinc-100 hover:text-amber-300 transition-colors leading-snug"
-      >
-        {item.title}
-      </a>
-      <div className="mt-2.5 flex items-center gap-4 text-[11px] font-mono text-zinc-500">
-        <span className="inline-flex items-center gap-1" title="점수">
+        <span className="text-[11px] font-mono text-zinc-500 inline-flex items-center gap-1">
           <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
             <path d="M12 19V5M5 12l7-7 7 7" />
           </svg>
@@ -74,7 +82,7 @@ export function SemiNewsItem({ item }: Props) {
             href={item.commentsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 hover:text-zinc-200 transition-colors"
+            className="text-[11px] font-mono text-zinc-500 inline-flex items-center gap-1 hover:text-zinc-200 transition-colors"
             title="댓글 스레드"
           >
             <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -83,14 +91,26 @@ export function SemiNewsItem({ item }: Props) {
             {item.comments}
           </a>
         ) : (
-          <span className="inline-flex items-center gap-1">
+          <span className="text-[11px] font-mono text-zinc-500 inline-flex items-center gap-1">
             <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
             {item.comments}
           </span>
         )}
-        <span>· {timeAgo(item.postedAt)}</span>
+        <span className="text-[11px] font-mono text-zinc-500">· {timeAgo(item.postedAt)}</span>
+        <a
+          href={googleTranslateUrl(item.title)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ml-auto text-[11px] text-zinc-400 hover:text-sky-300 transition-colors inline-flex items-center gap-1"
+          title="Google 번역으로 열기"
+        >
+          <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <path d="M5 8h6m-3-2v2c0 4-2 7-5 7m4-3c0 2 2 4 5 4M14 16l4-9 4 9M15 13h6" />
+          </svg>
+          번역
+        </a>
       </div>
     </article>
   );

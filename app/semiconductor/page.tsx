@@ -3,32 +3,43 @@ import { SemiCompanyCard } from "@/components/SemiCompanyCard";
 import { SemiGlossary } from "@/components/SemiGlossary";
 import { SemiIntroHero } from "@/components/SemiIntroHero";
 import { SemiNewsItem } from "@/components/SemiNewsItem";
-import { getSemiNews, TOPIC_LABELS, type Topic } from "@/lib/sources/semiNews";
+import { SemiTrendCard } from "@/components/SemiTrendCard";
+import {
+  getSemiNews,
+  groupByTopic,
+  summarizeTrends,
+  TOPIC_LABELS,
+  type Topic,
+} from "@/lib/sources/semiNews";
 import { SEMI_COMPANIES } from "@/lib/semiCompanies";
 
 export const metadata = { title: "반도체 — Deep Space" };
 export const revalidate = 600;
 
+const TOPIC_DESC: Record<Topic, string> = {
+  memory: "DRAM · HBM · NAND — AI 시대 가장 비싸지는 칩",
+  process: "2nm · 3nm — 더 작고 빠른 칩 만들기 경쟁",
+  equipment: "EUV 등 반도체 생산 장비 동향",
+  "ai-accelerator": "AI 학습/추론 전용 칩 (NVIDIA H200, AMD MI300 등)",
+  general: "기타 반도체 신호",
+};
+
+const TOPIC_ORDER: Topic[] = ["ai-accelerator", "memory", "process", "equipment", "general"];
+
+const PER_TOPIC_LIMIT = 5;
+
 export default async function SemiconductorPage() {
   const news = await getSemiNews({ hours: 48 });
+  const trend = summarizeTrends(news);
+  const grouped = groupByTopic(news);
 
-  // Counts by company
+  // Counts by company for company cards
   const newsByCompany = new Map<string, number>();
   for (const n of news) {
     for (const c of n.companies) {
       newsByCompany.set(c, (newsByCompany.get(c) ?? 0) + 1);
     }
   }
-
-  // Counts by topic (excl "general")
-  const topicCounts = new Map<Topic, number>();
-  for (const n of news) {
-    for (const t of n.topics) {
-      if (t === "general") continue;
-      topicCounts.set(t, (topicCounts.get(t) ?? 0) + 1);
-    }
-  }
-  const topicsRanked = Array.from(topicCounts.entries()).sort((a, b) => b[1] - a[1]);
 
   return (
     <div className="min-h-screen">
@@ -44,9 +55,12 @@ export default async function SemiconductorPage() {
             반도체 동향
           </h2>
           <p className="text-zinc-400 mt-2 text-base">
-            처음 보시는 분도 이해할 수 있게 산업 구조부터 정리했습니다. 아래 4 갈래 카드 → 핵심 기업 → 용어 → 실시간 신호 순으로 보시면 됩니다.
+            처음 보시는 분도 이해할 수 있게 산업 구조부터 정리했습니다. 산업 구조 → 핵심 기업 → 용어 → 실시간 신호 순으로 보시면 됩니다.
           </p>
         </section>
+
+        {/* Trend summary */}
+        <SemiTrendCard trend={trend} />
 
         {/* Industry structure intro */}
         <SemiIntroHero />
@@ -70,45 +84,48 @@ export default async function SemiconductorPage() {
         {/* Glossary */}
         <SemiGlossary />
 
-        {/* News */}
+        {/* News grouped by topic */}
         <section>
-          <div className="flex items-end justify-between mb-3 flex-wrap gap-3">
-            <div>
-              <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-300">
-                실시간 신호
-              </h3>
-              <p className="text-xs text-zinc-500 mt-1.5">
-                해외 커뮤니티(영문)에서 지난 48시간 동안 가장 많이 언급된 글. 회사·주제 태그를 보고 클릭해서 들어가세요.
-              </p>
-            </div>
-            <span className="text-xs font-mono text-zinc-500">
-              {news.length} items · 48h
-            </span>
+          <div className="mb-6">
+            <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-300 mb-1.5">
+              주제별 핵심 신호
+            </h3>
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              해외 커뮤니티(영문) 글을 자동 분류해서 주제별로 묶었습니다. 노란 줄이 한국어 컨텍스트 — 회사 + 어떤 종류의 뉴스인지 자동 추출.
+            </p>
           </div>
-          {topicsRanked.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap mb-4">
-              {topicsRanked.map(([topic, count]) => (
-                <span
-                  key={topic}
-                  className="inline-flex items-center gap-2 rounded-full bg-zinc-900/70 px-3.5 py-1.5 ring-1 ring-inset ring-zinc-700"
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                  <span className="text-xs text-zinc-100 font-medium">{TOPIC_LABELS[topic]}</span>
-                  <span className="text-[11px] font-mono text-zinc-400">{count}</span>
-                </span>
-              ))}
-            </div>
-          )}
+
           {news.length === 0 ? (
             <div className="rounded-xl border border-zinc-700/60 bg-zinc-900 ring-1 ring-inset ring-white/5 p-10 text-center">
               <p className="text-zinc-400 text-sm">최근 48시간 동안 잡힌 신호가 없습니다.</p>
               <p className="text-zinc-600 text-xs mt-1">잠시 후 다시 시도해주세요.</p>
             </div>
           ) : (
-            <div className="space-y-2.5">
-              {news.slice(0, 30).map((n) => (
-                <SemiNewsItem key={`${n.source}-${n.id}`} item={n} />
-              ))}
+            <div className="space-y-8">
+              {TOPIC_ORDER.map((topic) => {
+                const items = grouped.get(topic);
+                if (!items || items.length === 0) return null;
+                return (
+                  <div key={topic}>
+                    <div className="flex items-baseline justify-between gap-3 mb-3 pb-2 border-b border-zinc-800">
+                      <div>
+                        <h4 className="text-base font-bold text-amber-300 inline-block">
+                          {TOPIC_LABELS[topic]}
+                        </h4>
+                        <span className="ml-2.5 text-xs text-zinc-500">{TOPIC_DESC[topic]}</span>
+                      </div>
+                      <span className="text-xs font-mono text-zinc-500 shrink-0">
+                        {items.length}건
+                      </span>
+                    </div>
+                    <div className="space-y-2.5">
+                      {items.slice(0, PER_TOPIC_LIMIT).map((n) => (
+                        <SemiNewsItem key={`${n.source}-${n.id}`} item={n} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>
