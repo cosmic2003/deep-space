@@ -1,5 +1,7 @@
 import { Header } from "@/components/Header";
 import { SemiCompanyCard } from "@/components/SemiCompanyCard";
+import { SemiGlossary } from "@/components/SemiGlossary";
+import { SemiIntroHero } from "@/components/SemiIntroHero";
 import { SemiNewsItem } from "@/components/SemiNewsItem";
 import { getSemiNews, TOPIC_LABELS, type Topic } from "@/lib/sources/semiNews";
 import { SEMI_COMPANIES } from "@/lib/semiCompanies";
@@ -38,38 +40,23 @@ export default async function SemiconductorPage() {
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-400 mb-2">
             Semiconductor
           </p>
-          <div className="flex items-end justify-between gap-6 flex-wrap">
-            <div>
-              <h2 className="text-3xl font-semibold tracking-tight text-zinc-50">
-                반도체 동향
-              </h2>
-              <p className="text-zinc-400 mt-2 text-sm">
-                HackerNews · Reddit에서 모은 핵심 신호 · 최근 48시간 · 점수+댓글 가중 정렬
-              </p>
-            </div>
-            {topicsRanked.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap">
-                {topicsRanked.map(([topic, count]) => (
-                  <span
-                    key={topic}
-                    className="inline-flex items-center gap-2 rounded-full bg-zinc-900/70 px-4 py-2 ring-1 ring-inset ring-zinc-700"
-                  >
-                    <span className="h-2 w-2 rounded-full bg-amber-400" />
-                    <span className="text-sm text-zinc-100 font-medium">{TOPIC_LABELS[topic]}</span>
-                    <span className="text-xs font-mono text-zinc-400">{count}</span>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
+          <h2 className="text-3xl font-semibold tracking-tight text-zinc-50">
+            반도체 동향
+          </h2>
+          <p className="text-zinc-400 mt-2 text-base">
+            처음 보시는 분도 이해할 수 있게 산업 구조부터 정리했습니다. 아래 4 갈래 카드 → 핵심 기업 → 용어 → 실시간 신호 순으로 보시면 됩니다.
+          </p>
         </section>
+
+        {/* Industry structure intro */}
+        <SemiIntroHero />
 
         {/* Companies */}
         <section>
           <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-300 mb-5">
             핵심 기업
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {SEMI_COMPANIES.map((c) => (
               <SemiCompanyCard
                 key={c.name}
@@ -80,16 +67,38 @@ export default async function SemiconductorPage() {
           </div>
         </section>
 
+        {/* Glossary */}
+        <SemiGlossary />
+
         {/* News */}
         <section>
-          <div className="flex items-center justify-between mb-5">
-            <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-300">
-              핫 뉴스
-            </h3>
+          <div className="flex items-end justify-between mb-3 flex-wrap gap-3">
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-300">
+                실시간 신호
+              </h3>
+              <p className="text-xs text-zinc-500 mt-1.5">
+                해외 커뮤니티(영문)에서 지난 48시간 동안 가장 많이 언급된 글. 회사·주제 태그를 보고 클릭해서 들어가세요.
+              </p>
+            </div>
             <span className="text-xs font-mono text-zinc-500">
               {news.length} items · 48h
             </span>
           </div>
+          {topicsRanked.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap mb-4">
+              {topicsRanked.map(([topic, count]) => (
+                <span
+                  key={topic}
+                  className="inline-flex items-center gap-2 rounded-full bg-zinc-900/70 px-3.5 py-1.5 ring-1 ring-inset ring-zinc-700"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                  <span className="text-xs text-zinc-100 font-medium">{TOPIC_LABELS[topic]}</span>
+                  <span className="text-[11px] font-mono text-zinc-400">{count}</span>
+                </span>
+              ))}
+            </div>
+          )}
           {news.length === 0 ? (
             <div className="rounded-xl border border-zinc-700/60 bg-zinc-900 ring-1 ring-inset ring-white/5 p-10 text-center">
               <p className="text-zinc-400 text-sm">최근 48시간 동안 잡힌 신호가 없습니다.</p>

@@ -47,8 +47,11 @@ export function SemiCompanyCard({ company, newsCount }: Props) {
           </span>
         )}
       </div>
-      <p className="text-sm text-zinc-300 leading-snug" title={company.primary}>
+      <p className="text-sm text-zinc-300 leading-snug font-medium" title={company.primary}>
         {company.primary}
+      </p>
+      <p className="text-xs text-zinc-400 leading-relaxed mt-2.5">
+        {company.whyMatters}
       </p>
     </a>
   );
