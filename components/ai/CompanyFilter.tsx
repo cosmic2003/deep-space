@@ -40,8 +40,8 @@ function Chip({
       prefetch
       className={
         active
-          ? "inline-flex items-center gap-2 rounded-full bg-zinc-100 px-4 py-1.5 text-sm font-semibold text-zinc-900"
-          : "inline-flex items-center gap-2 rounded-full bg-zinc-900 px-4 py-1.5 text-sm text-zinc-400 ring-1 ring-inset ring-zinc-800 transition-colors hover:bg-zinc-800/70 hover:text-zinc-100"
+          ? "inline-flex items-center gap-2 rounded-full bg-zinc-100 px-4 py-2 sm:py-1.5 text-sm font-semibold text-zinc-900"
+          : "inline-flex items-center gap-2 rounded-full bg-zinc-900 px-4 py-2 sm:py-1.5 text-sm text-zinc-400 ring-1 ring-inset ring-zinc-800 transition-colors hover:bg-zinc-800/70 hover:text-zinc-100"
       }
     >
       {dot && <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />}

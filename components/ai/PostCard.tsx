@@ -26,8 +26,8 @@ interface Props {
 export function PostCard({ post, now }: Props) {
   const c = COMPANY_MAP[post.company];
   return (
-    <article className="group relative rounded-xl border border-zinc-800 bg-zinc-900 ring-1 ring-inset ring-white/5 p-6 transition-all hover:border-zinc-700 hover:bg-zinc-800/60">
-      <header className="flex items-center justify-between gap-3 mb-3">
+    <article className="group relative rounded-xl border border-zinc-800 bg-zinc-900 ring-1 ring-inset ring-white/5 p-5 sm:p-6 transition-all hover:border-zinc-700 hover:bg-zinc-800/60">
+      <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 mb-3">
         <span
           className={`inline-flex items-center gap-2 rounded-full ${c.bg} px-3 py-1 text-xs font-bold tracking-wide ring-1 ring-inset ${c.ring} ${c.text}`}
         >

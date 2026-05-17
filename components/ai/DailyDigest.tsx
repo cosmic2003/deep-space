@@ -10,7 +10,7 @@ function formatDate(iso: string): string {
 
 export function DailyDigest({ digest }: { digest: Digest }) {
   return (
-    <section className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-fuchsia-500/5 to-transparent p-8 ring-1 ring-inset ring-white/5">
+    <section className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-fuchsia-500/5 to-transparent p-5 sm:p-8 ring-1 ring-inset ring-white/5">
       <header className="flex items-start justify-between gap-4 mb-5 flex-wrap">
         <div className="flex items-center gap-3">
           <span
@@ -43,7 +43,7 @@ export function DailyDigest({ digest }: { digest: Digest }) {
         </span>
       </header>
 
-      <p className="text-[15px] leading-relaxed text-zinc-200 mb-6">
+      <p className="text-sm sm:text-[15px] leading-relaxed text-zinc-200 mb-5 sm:mb-6">
         {digest.summary}
       </p>
 
@@ -69,12 +69,12 @@ export function DailyDigest({ digest }: { digest: Digest }) {
                     href={h.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 hover:text-zinc-50"
+                    className="flex items-start sm:items-center gap-2 sm:gap-3 hover:text-zinc-50"
                   >
                     {content}
                   </a>
                 ) : (
-                  <div className="flex items-center gap-3">{content}</div>
+                  <div className="flex items-start sm:items-center gap-2 sm:gap-3">{content}</div>
                 )}
               </li>
             );
