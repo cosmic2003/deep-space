@@ -24,7 +24,7 @@ const DIGEST_LOOKBACK_HOURS = 24;
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 const geminiKey   = process.env.GEMINI_API_KEY;
-const geminiModel = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+const geminiModel = process.env.GEMINI_MODEL ?? "gemini-2.5-flash-lite";
 
 if (!supabaseUrl || !supabaseKey || !geminiKey) {
   console.error("Missing env: SUPABASE_URL, SUPABASE_SECRET_KEY, GEMINI_API_KEY");
@@ -80,27 +80,47 @@ function pickDate(item) {
   return item.pubDate ?? item.published ?? item.updated ?? item["dc:date"] ?? null;
 }
 
+// Free-tier rate limits vary by model (5–15 RPM). Enforce a minimum gap
+// between calls; retry once on 429 with a long sleep as safety net.
+const MIN_GEMINI_INTERVAL_MS = 6500; // ~9 RPM, safely under flash-lite free tier
+let lastGeminiCall = 0;
+
+async function throttleGemini() {
+  const wait = lastGeminiCall + MIN_GEMINI_INTERVAL_MS - Date.now();
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  lastGeminiCall = Date.now();
+}
+
 async function callGemini(prompt, maxTokens) {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          maxOutputTokens: maxTokens,
-          temperature: 0.3,
-        },
-      }),
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    await throttleGemini();
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            maxOutputTokens: maxTokens,
+            temperature: 0.3,
+          },
+        }),
+      }
+    );
+    if (res.status === 429 && attempt === 1) {
+      console.warn(`Gemini 429 on attempt ${attempt}; sleeping 30s then retrying`);
+      await new Promise((r) => setTimeout(r, 30_000));
+      continue;
     }
-  );
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Gemini ${res.status}: ${body.slice(0, 400)}`);
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Gemini ${res.status}: ${body.slice(0, 400)}`);
+    }
+    const data = await res.json();
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
   }
-  const data = await res.json();
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+  throw new Error("Gemini: max retries exceeded");
 }
 
 async function summarizePost(title, body) {
