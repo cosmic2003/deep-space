@@ -17,8 +17,8 @@ const FEEDS = [
 ];
 
 const MAX_ITEMS_PER_FEED   = 8;
-const SUMMARY_MAX_TOKENS   = 300;
-const DIGEST_MAX_TOKENS    = 600;
+const SUMMARY_MAX_TOKENS   = 1000; // Korean text is token-heavy; 300 caused mid-sentence cuts
+const DIGEST_MAX_TOKENS    = 2000;
 const DIGEST_LOOKBACK_HOURS = 168; // 7 days
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -104,6 +104,7 @@ async function callGemini(prompt, maxTokens) {
           generationConfig: {
             maxOutputTokens: maxTokens,
             temperature: 0.3,
+            thinkingConfig: { thinkingBudget: 0 },
           },
         }),
       }
@@ -118,6 +119,10 @@ async function callGemini(prompt, maxTokens) {
       throw new Error(`Gemini ${res.status}: ${body.slice(0, 400)}`);
     }
     const data = await res.json();
+    const finishReason = data?.candidates?.[0]?.finishReason;
+    if (finishReason && finishReason !== "STOP") {
+      console.warn(`Gemini finished with ${finishReason} (not STOP) — output may be truncated`);
+    }
     return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
   }
   throw new Error("Gemini: max retries exceeded");
