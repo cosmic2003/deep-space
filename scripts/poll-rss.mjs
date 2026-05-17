@@ -19,7 +19,7 @@ const FEEDS = [
 const MAX_ITEMS_PER_FEED   = 8;
 const SUMMARY_MAX_TOKENS   = 300;
 const DIGEST_MAX_TOKENS    = 600;
-const DIGEST_LOOKBACK_HOURS = 24;
+const DIGEST_LOOKBACK_HOURS = 168; // 7 days
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SECRET_KEY;
@@ -257,8 +257,8 @@ async function regenerateDigest() {
     .map((p) => `- [${p.company}] ${p.title} — ${p.summary}`)
     .join("\n");
   const prompt = [
-    "다음은 지난 24시간 AI 업계 블로그 글들이야.",
-    '이 흐름을 종합한 "오늘의 주요 이슈" 요약을 한국어 3~5문장(최대 500자)으로 써.',
+    "다음은 지난 7일 AI 업계 블로그 글들이야.",
+    '이 흐름을 종합한 "이번 주 주요 이슈" 요약을 한국어 3~5문장(최대 500자)으로 써.',
     "마케팅 어투 X. 큰 흐름·맥락·의미 위주로. 불릿 없이 평문.",
     "",
     list,

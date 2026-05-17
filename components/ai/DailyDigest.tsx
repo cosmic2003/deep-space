@@ -31,10 +31,10 @@ export function DailyDigest({ digest }: { digest: Digest }) {
           </span>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet-300">
-              Daily Digest
+              Weekly Digest
             </p>
             <h2 className="text-xl font-semibold text-zinc-50">
-              오늘의 주요 이슈
+              이번 주 주요 이슈
             </h2>
           </div>
         </div>
@@ -83,7 +83,7 @@ export function DailyDigest({ digest }: { digest: Digest }) {
       )}
 
       <footer className="mt-6 pt-4 border-t border-violet-500/20 text-[11px] text-zinc-500 uppercase tracking-wider">
-        매일 자정 UTC 자동 생성 · LLM 요약
+        30분마다 최근 7일 기준 갱신 · LLM 요약
       </footer>
     </section>
   );
