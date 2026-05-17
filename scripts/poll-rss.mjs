@@ -9,10 +9,11 @@ import { XMLParser } from "fast-xml-parser";
 
 const FEEDS = [
   { company: "openai",          url: "https://openai.com/news/rss.xml" },
-  { company: "anthropic",       url: "https://www.anthropic.com/news/rss.xml" },
   { company: "google-deepmind", url: "https://deepmind.google/blog/rss.xml" },
-  { company: "meta-ai",         url: "https://ai.meta.com/blog/rss/" },
-  // xAI: no public RSS. Add HTML scraper or third-party feed later.
+  // anthropic: no working public RSS found at /news/rss.xml. Try RSSHub
+  //   (https://rsshub.app/anthropic/news) or an HTML scraper later.
+  // meta-ai: no working public RSS found at /blog/rss/. Same deal — RSSHub or scraper.
+  // xai: no public RSS at all. HTML scraper required.
 ];
 
 const MAX_ITEMS_PER_FEED   = 8;
@@ -23,7 +24,7 @@ const DIGEST_LOOKBACK_HOURS = 24;
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 const geminiKey   = process.env.GEMINI_API_KEY;
-const geminiModel = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
+const geminiModel = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
 
 if (!supabaseUrl || !supabaseKey || !geminiKey) {
   console.error("Missing env: SUPABASE_URL, SUPABASE_SECRET_KEY, GEMINI_API_KEY");
