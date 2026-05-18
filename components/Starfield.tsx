@@ -47,9 +47,9 @@ export function Starfield({ count = 380 }: Props) {
         className="absolute inset-0"
         style={{
           background: `
-            radial-gradient(ellipse 60% 40% at 18% 22%, rgba(99, 102, 241, 0.08), transparent 60%),
-            radial-gradient(ellipse 50% 35% at 82% 78%, rgba(56, 189, 248, 0.06), transparent 60%),
-            radial-gradient(ellipse 35% 25% at 50% 55%, rgba(168, 85, 247, 0.05), transparent 60%)
+            radial-gradient(ellipse 60% 40% at 18% 22%, rgba(99, 102, 241, 0.14), transparent 65%),
+            radial-gradient(ellipse 50% 35% at 82% 78%, rgba(56, 189, 248, 0.11), transparent 65%),
+            radial-gradient(ellipse 35% 25% at 50% 55%, rgba(168, 85, 247, 0.09), transparent 65%)
           `,
         }}
       />

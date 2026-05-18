@@ -50,15 +50,15 @@ export function LaunchCard({ launch }: Props) {
         />
       )}
 
-      <div className="relative p-7 flex flex-col gap-5">
+      <div className="relative p-5 sm:p-7 flex flex-col gap-4 sm:gap-5">
         <header className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <span className="h-8 w-1.5 rounded-full bg-sky-400 shrink-0" aria-hidden />
-            <span className="text-2xl font-bold tracking-tight text-sky-300 truncate">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            <span className="h-7 sm:h-8 w-1.5 rounded-full bg-sky-400 shrink-0" aria-hidden />
+            <span className="text-xl sm:text-2xl font-bold tracking-tight text-sky-300 truncate">
               {provider}
             </span>
             {isImminent && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-red-300 ring-1 ring-inset ring-red-500/40">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2 sm:px-2.5 py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-red-300 ring-1 ring-inset ring-red-500/40 shrink-0">
                 <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
                 Live Soon
               </span>
@@ -67,36 +67,36 @@ export function LaunchCard({ launch }: Props) {
           <StatusBadge status={launch.status} />
         </header>
 
-        <div className="space-y-1.5">
-          <h2 className="text-3xl font-bold leading-tight text-zinc-50 tracking-tight">
+        <div className="space-y-1 sm:space-y-1.5">
+          <h2 className="text-2xl sm:text-3xl font-bold leading-tight text-zinc-50 tracking-tight">
             {rocket}
           </h2>
           {mission && (
-            <p className="text-lg text-zinc-300 leading-snug">{mission}</p>
+            <p className="text-base sm:text-lg text-zinc-300 leading-snug">{mission}</p>
           )}
         </div>
 
-        <div className="pt-1 scale-[1.3] origin-left inline-block">
+        <div className="pt-1 scale-110 sm:scale-[1.3] origin-left inline-block">
           <Countdown netIso={launch.net} />
         </div>
 
-        <dl className="grid grid-cols-1 gap-2.5 text-sm text-zinc-300 pt-3 mt-2 border-t border-zinc-700/50">
-          <div className="flex justify-between gap-4 pt-3">
-            <dt className="text-zinc-500 uppercase text-base tracking-wider font-semibold self-center">발사 시각</dt>
-            <dd className="font-mono text-zinc-100 text-right text-xl tabular-nums">
+        <dl className="grid grid-cols-1 gap-2 sm:gap-2.5 text-sm text-zinc-300 pt-2 sm:pt-3 mt-1 sm:mt-2 border-t border-zinc-700/50">
+          <div className="flex justify-between gap-3 sm:gap-4 pt-2 sm:pt-3">
+            <dt className="text-zinc-500 uppercase text-xs sm:text-base tracking-wider font-semibold self-center shrink-0">발사 시각</dt>
+            <dd className="font-mono text-zinc-100 text-right text-sm sm:text-xl tabular-nums">
               {formatNetUtc(launch.net)}
             </dd>
           </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-zinc-500 uppercase text-base tracking-wider font-semibold self-center">발사장</dt>
-            <dd className="text-zinc-100 text-right text-xl truncate" title={location}>
+          <div className="flex justify-between gap-3 sm:gap-4">
+            <dt className="text-zinc-500 uppercase text-xs sm:text-base tracking-wider font-semibold self-center shrink-0">발사장</dt>
+            <dd className="text-zinc-100 text-right text-sm sm:text-xl truncate min-w-0" title={location}>
               {padName} · {location}
             </dd>
           </div>
           {orbit && (
-            <div className="flex justify-between gap-4">
-              <dt className="text-zinc-500 uppercase text-base tracking-wider font-semibold self-center">궤도</dt>
-              <dd className="text-zinc-100 text-right text-xl">{orbit}</dd>
+            <div className="flex justify-between gap-3 sm:gap-4">
+              <dt className="text-zinc-500 uppercase text-xs sm:text-base tracking-wider font-semibold self-center shrink-0">궤도</dt>
+              <dd className="text-zinc-100 text-right text-sm sm:text-xl">{orbit}</dd>
             </div>
           )}
         </dl>

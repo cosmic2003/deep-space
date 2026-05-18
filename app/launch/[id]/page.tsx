@@ -17,7 +17,7 @@ export default async function LaunchPage({ params }: Props) {
   return (
     <div className="min-h-screen">
       <header className="border-b border-zinc-900/80 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-10">
-        <div className="mx-auto max-w-[1600px] px-6 py-4 flex items-center gap-4">
+        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:gap-4">
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-sm text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-50"

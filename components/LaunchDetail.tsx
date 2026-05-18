@@ -61,45 +61,45 @@ export function LaunchDetail({ launch }: Props) {
             <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/40 via-zinc-900/85 to-zinc-900" />
           </>
         )}
-        <div className="relative px-8 pt-16 pb-10 sm:px-14 sm:pt-24 sm:pb-12">
-          <div className="flex items-center gap-3.5 mb-5">
-            <span className="h-10 w-1.5 rounded-full bg-sky-400" aria-hidden />
-            <span className="text-3xl font-bold tracking-tight text-sky-300">
+        <div className="relative px-5 pt-10 pb-8 sm:px-14 sm:pt-24 sm:pb-12">
+          <div className="flex items-center gap-2.5 sm:gap-3.5 mb-4 sm:mb-5">
+            <span className="h-8 sm:h-10 w-1.5 rounded-full bg-sky-400" aria-hidden />
+            <span className="text-2xl sm:text-3xl font-bold tracking-tight text-sky-300">
               {provider}
             </span>
           </div>
-          <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-zinc-50 leading-[1.05]">
+          <h1 className="text-3xl sm:text-6xl font-bold tracking-tight text-zinc-50 leading-[1.1] sm:leading-[1.05]">
             {rocket}
           </h1>
           {mission && (
-            <p className="mt-4 text-2xl text-zinc-300 leading-snug">
+            <p className="mt-3 sm:mt-4 text-lg sm:text-2xl text-zinc-300 leading-snug">
               {mission}
             </p>
           )}
 
-          <div className="mt-8 flex items-center gap-3 flex-wrap">
+          <div className="mt-6 sm:mt-8 flex items-center gap-2 sm:gap-3 flex-wrap">
             <StatusBadge status={launch.status} />
             {launch.webcast_live && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-3.5 py-1.5 text-sm font-semibold uppercase tracking-wider text-red-300 ring-1 ring-inset ring-red-500/40">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs sm:text-sm font-semibold uppercase tracking-wider text-red-300 ring-1 ring-inset ring-red-500/40">
                 <span className="h-2 w-2 rounded-full bg-red-400 animate-pulse" />
                 Live Now
               </span>
             )}
             {launch.probability != null && (
-              <span className="text-base text-zinc-400">
+              <span className="text-sm sm:text-base text-zinc-400">
                 기상 가능성 <span className="text-zinc-100 font-mono">{launch.probability}%</span>
               </span>
             )}
           </div>
 
-          <div className="mt-10 scale-[1.6] origin-left inline-block">
+          <div className="mt-7 sm:mt-10 scale-110 sm:scale-[1.6] origin-left inline-block">
             <Countdown netIso={launch.net} />
           </div>
         </div>
       </header>
 
       {/* Body — each section is its own panel for clear separation */}
-      <div className="px-6 sm:px-10 pb-12 pt-8 space-y-6 bg-zinc-900">
+      <div className="px-4 sm:px-10 pb-8 sm:pb-12 pt-6 sm:pt-8 space-y-5 sm:space-y-6 bg-zinc-900">
         {/* Time + pad info */}
         <SectionPanel title="발사 정보">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -203,8 +203,8 @@ function SectionPanel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-zinc-700/60 bg-zinc-950/60 ring-1 ring-inset ring-white/5 px-6 py-6 sm:px-8 sm:py-7">
-      <h2 className="text-base font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-5 pb-3 border-b border-zinc-800">
+    <section className="rounded-2xl border border-zinc-700/60 bg-zinc-950/60 ring-1 ring-inset ring-white/5 px-4 py-5 sm:px-8 sm:py-7">
+      <h2 className="text-sm sm:text-base font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-4 sm:mb-5 pb-3 border-b border-zinc-800">
         {title}
       </h2>
       {children}
@@ -227,17 +227,17 @@ function InfoTile({
 }) {
   const inner = (
     <>
-      <dt className="text-sm font-medium uppercase tracking-wider text-zinc-400">
+      <dt className="text-xs sm:text-sm font-medium uppercase tracking-wider text-zinc-400">
         {label}
       </dt>
       <dd
-        className={`mt-2 text-xl text-zinc-50 ${mono ? "font-mono tabular-nums" : ""}`}
+        className={`mt-1.5 sm:mt-2 text-base sm:text-xl text-zinc-50 break-words ${mono ? "font-mono tabular-nums" : ""}`}
       >
         {value}
       </dd>
     </>
   );
-  const cls = `rounded-xl border border-zinc-700/60 bg-zinc-800/60 px-6 py-5 ${
+  const cls = `rounded-xl border border-zinc-700/60 bg-zinc-800/60 px-4 py-4 sm:px-6 sm:py-5 ${
     span2 ? "sm:col-span-2" : ""
   } ${href ? "hover:border-sky-500/50 hover:bg-sky-500/5 transition-colors" : ""}`;
   if (href) {
