@@ -9,11 +9,11 @@ const parser = new XMLParser({
 
 const API = "http://export.arxiv.org/api/query";
 
-// arXiv asks for >=3s between API requests AND has an IP-level burst limit
-// that takes several minutes to cool down. Multiple ArxivAdapter instances
-// share this throttle. On 429/503 we back off and retry once with a long pause.
+// arXiv asks for >=3s between API requests. Multiple ArxivAdapter instances
+// share this throttle. No in-call retries on 429/503 — the workflow timeout
+// is more valuable than one paper; failures will retry on the next cron tick
+// once the IP cools down.
 const MIN_ARXIV_INTERVAL_MS = 4000;
-const RETRY_SLEEP_MS = 60_000;
 let lastArxivCall = 0;
 async function throttleArxiv() {
   const wait = lastArxivCall + MIN_ARXIV_INTERVAL_MS - Date.now();
@@ -21,19 +21,11 @@ async function throttleArxiv() {
   lastArxivCall = Date.now();
 }
 
-async function arxivFetch(url, { name }) {
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    await throttleArxiv();
-    const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
-    if (res.ok) return res;
-    if ((res.status === 429 || res.status === 503) && attempt === 1) {
-      console.warn(`[${name}] arXiv ${res.status}; sleeping ${RETRY_SLEEP_MS / 1000}s and retrying once`);
-      await new Promise((r) => setTimeout(r, RETRY_SLEEP_MS));
-      continue;
-    }
-    throw new Error(`HTTP ${res.status} for ${url}`);
-  }
-  throw new Error(`arXiv: max retries exceeded for ${url}`);
+async function arxivFetch(url) {
+  await throttleArxiv();
+  const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+  return res;
 }
 
 function buildQuery({ authors = [], categories = [], extraTerms = [] }) {
@@ -98,7 +90,7 @@ export class ArxivAdapter extends SourceAdapter {
     const q = buildQuery({ authors, categories });
     const url = `${API}?search_query=${encodeURIComponent(q)}&start=0&max_results=${maxItems * 2}&sortBy=submittedDate&sortOrder=descending`;
 
-    const res = await arxivFetch(url, { name: this.name });
+    const res = await arxivFetch(url);
     const xml = await res.text();
     const parsed = parser.parse(xml);
     const raw = parsed?.feed?.entry ?? [];

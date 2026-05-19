@@ -43,40 +43,35 @@ async function throttleGemini() {
 }
 
 async function callGemini(prompt, maxTokens) {
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    await throttleGemini();
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            maxOutputTokens: maxTokens,
-            temperature: 0.3,
-            thinkingConfig: { thinkingBudget: 0 },
-          },
-        }),
-      }
-    );
-    if (res.status === 429 && attempt === 1) {
-      console.warn(`Gemini 429 on attempt ${attempt}; sleeping 30s then retrying`);
-      await new Promise((r) => setTimeout(r, 30_000));
-      continue;
+  // No in-call retries. On 429/503, fail fast and let the next cron tick
+  // retry the item via dedup (it's not in DB yet). Retries here just stacked
+  // 30-60s sleeps on a transient outage and blew the workflow timeout.
+  await throttleGemini();
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          maxOutputTokens: maxTokens,
+          temperature: 0.3,
+          thinkingConfig: { thinkingBudget: 0 },
+        },
+      }),
     }
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`Gemini ${res.status}: ${body.slice(0, 400)}`);
-    }
-    const data = await res.json();
-    const finishReason = data?.candidates?.[0]?.finishReason;
-    if (finishReason && finishReason !== "STOP") {
-      console.warn(`Gemini finished with ${finishReason} (not STOP) — output may be truncated`);
-    }
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+  );
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Gemini ${res.status}: ${body.slice(0, 200)}`);
   }
-  throw new Error("Gemini: max retries exceeded");
+  const data = await res.json();
+  const finishReason = data?.candidates?.[0]?.finishReason;
+  if (finishReason && finishReason !== "STOP") {
+    console.warn(`Gemini finished with ${finishReason} (not STOP) — output may be truncated`);
+  }
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
 }
 
 // Different source types deserve slightly different summariser instructions.
