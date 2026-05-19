@@ -5,7 +5,7 @@ export type AICompany =
   | "xai"
   | "meta-ai";
 
-export type PostSource = "blog" | "x" | "paper";
+export type PostSource = "blog" | "x" | "paper" | "github" | "reddit" | "hn";
 
 export interface AIPost {
   id: string;

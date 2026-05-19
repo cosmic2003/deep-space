@@ -20,8 +20,14 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 do $$ begin
-  create type post_source as enum ('blog', 'x', 'paper');
+  create type post_source as enum ('blog', 'x', 'paper', 'github', 'reddit', 'hn');
 exception when duplicate_object then null; end $$;
+
+-- For pre-existing databases that already created post_source with an older
+-- value set, add new values idempotently. See db/migrations/00{2,3}_*.sql.
+alter type post_source add value if not exists 'github';
+alter type post_source add value if not exists 'reddit';
+alter type post_source add value if not exists 'hn';
 
 -- ──────────────────────────────────────────────────────────────────────────────
 -- ai_posts

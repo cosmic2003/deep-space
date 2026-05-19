@@ -1,25 +1,21 @@
-// Polls each company's RSS/Atom feed, summarizes any new items with Gemini,
-// and upserts them into Supabase. Then regenerates today's daily digest.
+// Orchestrator: iterates over every SourceAdapter declared in
+// ./sources.config.mjs, dedupes against Supabase, summarises new items with
+// Gemini, upserts to ai_posts, then regenerates the daily digest.
+//
+// Adapters never touch the DB — they just return RawItem[]. This file owns
+// all I/O against Supabase and Gemini.
 //
 // Run by GitHub Actions on a 30-minute cron (see .github/workflows/poll-rss.yml).
-// Env: SUPABASE_URL, SUPABASE_SECRET_KEY, GEMINI_API_KEY, GEMINI_MODEL (optional)
+// Env: SUPABASE_URL, SUPABASE_SECRET_KEY, GEMINI_API_KEY,
+//      GEMINI_MODEL (optional), GITHUB_TOKEN (optional — for higher rate limit)
 
 import { createClient } from "@supabase/supabase-js";
-import { XMLParser } from "fast-xml-parser";
+import { SOURCES } from "./sources.config.mjs";
 
-const FEEDS = [
-  { company: "openai",          url: "https://openai.com/news/rss.xml" },
-  { company: "google-deepmind", url: "https://deepmind.google/blog/rss.xml" },
-  // anthropic: no working public RSS found at /news/rss.xml. Try RSSHub
-  //   (https://rsshub.app/anthropic/news) or an HTML scraper later.
-  // meta-ai: no working public RSS found at /blog/rss/. Same deal — RSSHub or scraper.
-  // xai: no public RSS at all. HTML scraper required.
-];
-
-const MAX_ITEMS_PER_FEED   = 8;
-const SUMMARY_MAX_TOKENS   = 1000; // Korean text is token-heavy; 300 caused mid-sentence cuts
-const DIGEST_MAX_TOKENS    = 2000;
+const SUMMARY_MAX_TOKENS    = 1000; // Korean text is token-heavy; 300 caused mid-sentence cuts
+const DIGEST_MAX_TOKENS     = 2000;
 const DIGEST_LOOKBACK_HOURS = 168; // 7 days
+const DIGEST_LIMIT          = 30;
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SECRET_KEY;
@@ -34,51 +30,6 @@ if (!supabaseUrl || !supabaseKey || !geminiKey) {
 const sb = createClient(supabaseUrl, supabaseKey, {
   auth: { persistSession: false },
 });
-
-const parser = new XMLParser({
-  ignoreAttributes: false,
-  attributeNamePrefix: "@_",
-  textNodeName: "#text",
-});
-
-function stripHtml(s) {
-  return String(s ?? "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function pickText(v) {
-  if (v == null) return "";
-  if (typeof v === "string") return v;
-  if (typeof v === "object") return v["#text"] ?? v["@_href"] ?? "";
-  return String(v);
-}
-
-function pickLink(item) {
-  if (typeof item.link === "string") return item.link;
-  if (Array.isArray(item.link)) {
-    const alt = item.link.find((l) => l["@_rel"] === "alternate" || !l["@_rel"]);
-    return alt?.["@_href"] ?? item.link[0]?.["@_href"] ?? "";
-  }
-  if (typeof item.link === "object") return item.link["@_href"] ?? item.link["#text"] ?? "";
-  return "";
-}
-
-function pickId(item) {
-  if (item.guid) return pickText(item.guid);
-  if (item.id) return pickText(item.id);
-  return pickLink(item);
-}
-
-function pickDate(item) {
-  return item.pubDate ?? item.published ?? item.updated ?? item["dc:date"] ?? null;
-}
 
 // Free-tier rate limits vary by model (5–15 RPM). Enforce a minimum gap
 // between calls; retry once on 429 with a long sleep as safety net.
@@ -128,141 +79,136 @@ async function callGemini(prompt, maxTokens) {
   throw new Error("Gemini: max retries exceeded");
 }
 
-async function summarizePost(title, body) {
-  const prompt = [
-    "다음 AI 회사 블로그 글을 한국어 1~2문장(최대 200자)으로 요약해.",
-    "마케팅 어투 제거하고 팩트·수치 위주. 불릿 없이 평문.",
-    "",
-    `제목: ${title}`,
-    "",
-    "본문:",
-    body.slice(0, 4000),
-  ].join("\n");
-  return callGemini(prompt, SUMMARY_MAX_TOKENS);
+// Different source types deserve slightly different summariser instructions.
+// Blog posts want fact-distilled prose; tweets are already short, so we just
+// clean them up; papers benefit from being framed as research findings.
+function summaryPromptFor(item) {
+  const head = `제목: ${item.title}\n\n본문:\n${(item.body ?? "").slice(0, 4000)}`;
+  switch (item.source) {
+    case "x":
+      return [
+        "다음 X(Twitter) 게시물을 한국어 1문장(최대 120자)으로 요약해.",
+        "농담·이모지 제거. 사실/숫자/링크만. 불릿 없이 평문.",
+        "",
+        head,
+      ].join("\n");
+    case "paper":
+      return [
+        "다음 arXiv 논문 초록을 한국어 1~2문장(최대 250자)으로 요약해.",
+        "연구 목적·방법·결과 핵심만. 마케팅 X. 불릿 없이 평문.",
+        "",
+        head,
+      ].join("\n");
+    case "github":
+      return [
+        "다음 GitHub 릴리즈 노트를 한국어 1~2문장(최대 200자)으로 요약해.",
+        "주요 변경/추가/버그픽스만 압축. 불릿 없이 평문.",
+        "",
+        head,
+      ].join("\n");
+    case "reddit":
+      return [
+        "다음 Reddit 게시물을 한국어 1문장(최대 150자)으로 요약해.",
+        "주관·감탄 제거하고 무슨 일이 일어났는지만. 불릿 없이 평문.",
+        "",
+        head,
+      ].join("\n");
+    case "hn":
+      return [
+        "다음 Hacker News 게시물(테크 커뮤니티 화제글)을 한국어 1문장(최대 150자)으로 요약해.",
+        "왜 화제가 됐는지·핵심 사실만. 코멘트는 무시. 불릿 없이 평문.",
+        "",
+        head,
+      ].join("\n");
+    case "blog":
+    default:
+      return [
+        "다음 AI 회사 블로그 글을 한국어 1~2문장(최대 200자)으로 요약해.",
+        "마케팅 어투 제거하고 팩트·수치 위주. 불릿 없이 평문.",
+        "",
+        head,
+      ].join("\n");
+  }
 }
 
-async function pollFeed(feed) {
-  console.log(`\n[${feed.company}] GET ${feed.url}`);
-  let xml;
-  try {
-    const res = await fetch(feed.url, {
-      headers: { "User-Agent": "deep-space-poller/1.0 (+https://github.com/cosmic2003/deep-space)" },
-    });
-    if (!res.ok) {
-      console.error(`[${feed.company}] HTTP ${res.status} — skipping`);
-      return { added: 0 };
-    }
-    xml = await res.text();
-  } catch (e) {
-    console.error(`[${feed.company}] fetch failed:`, e.message);
-    return { added: 0 };
-  }
+async function summarize(item) {
+  return callGemini(summaryPromptFor(item), SUMMARY_MAX_TOKENS);
+}
 
-  let parsed;
-  try {
-    parsed = parser.parse(xml);
-  } catch (e) {
-    console.error(`[${feed.company}] XML parse failed:`, e.message);
-    return { added: 0 };
-  }
-
-  const rawItems = parsed?.rss?.channel?.item ?? parsed?.feed?.entry ?? [];
-  const items = Array.isArray(rawItems) ? rawItems : [rawItems];
-  console.log(`[${feed.company}] ${items.length} items found`);
-
+async function processItems(adapter, items) {
   let added = 0;
-  for (const item of items.slice(0, MAX_ITEMS_PER_FEED)) {
-    const id = pickId(item);
-    const title = stripHtml(pickText(item.title));
-    const link = pickLink(item);
-    const dateStr = pickDate(item);
-    const rawBody =
-      pickText(item["content:encoded"]) ||
-      pickText(item.content) ||
-      pickText(item.description) ||
-      pickText(item.summary) ||
-      "";
-    const body = stripHtml(rawBody);
-
-    if (!id || !title || !dateStr) {
-      console.warn(`[${feed.company}] skipping incomplete item: ${title || id || "(unknown)"}`);
-      continue;
-    }
-
-    let publishedAt;
-    try {
-      publishedAt = new Date(dateStr).toISOString();
-    } catch {
-      console.warn(`[${feed.company}] invalid date: ${dateStr}`);
+  for (const item of items) {
+    if (!item.id || !item.title || !item.publishedAt || !item.url) {
+      console.warn(`[${adapter.name}] skipping incomplete item: ${item.title || item.id || "(unknown)"}`);
       continue;
     }
 
     const { data: existing, error: selErr } = await sb
       .from("ai_posts")
       .select("id")
-      .eq("id", id)
+      .eq("id", item.id)
       .maybeSingle();
     if (selErr) {
-      console.error(`[${feed.company}] select failed:`, selErr.message);
+      console.error(`[${adapter.name}] select failed:`, selErr.message);
       continue;
     }
     if (existing) continue;
 
     let summary;
     try {
-      summary = await summarizePost(title, body);
+      summary = await summarize(item);
     } catch (e) {
-      console.error(`[${feed.company}] summarize failed for "${title}":`, e.message);
+      console.error(`[${adapter.name}] summarize failed for "${item.title}":`, e.message);
       continue;
     }
     if (!summary) {
-      console.warn(`[${feed.company}] empty summary for "${title}", skipping`);
+      console.warn(`[${adapter.name}] empty summary for "${item.title}", skipping`);
       continue;
     }
 
     const { error: upErr } = await sb.from("ai_posts").upsert({
-      id,
-      company: feed.company,
-      title,
+      id: item.id,
+      company: item.company,
+      title: item.title,
       summary,
-      url: link,
-      published_at: publishedAt,
-      source: "blog",
-      tags: [],
+      url: item.url,
+      published_at: item.publishedAt,
+      source: item.source,
+      tags: item.tags ?? [],
     });
     if (upErr) {
-      console.error(`[${feed.company}] upsert failed:`, upErr.message);
+      console.error(`[${adapter.name}] upsert failed:`, upErr.message);
     } else {
-      console.log(`[${feed.company}] + ${title}`);
+      console.log(`[${adapter.name}] + ${item.title}`);
       added++;
     }
   }
-  return { added };
+  return added;
 }
 
 async function regenerateDigest() {
   const since = new Date(Date.now() - DIGEST_LOOKBACK_HOURS * 3600_000).toISOString();
   const { data: recent, error } = await sb
     .from("ai_posts")
-    .select("title, company, url, summary")
+    .select("title, company, url, summary, source")
     .gte("published_at", since)
     .order("published_at", { ascending: false })
-    .limit(20);
+    .limit(DIGEST_LIMIT);
 
   if (error) {
     console.error("[digest] select failed:", error.message);
     return;
   }
   if (!recent || recent.length === 0) {
-    console.log("[digest] no posts in last 24h, skipping");
+    console.log("[digest] no posts in lookback window, skipping");
     return;
   }
 
   const list = recent
-    .map((p) => `- [${p.company}] ${p.title} — ${p.summary}`)
+    .map((p) => `- [${p.company}/${p.source}] ${p.title} — ${p.summary}`)
     .join("\n");
   const prompt = [
-    "다음은 지난 7일 AI 업계 블로그 글들이야.",
+    "다음은 지난 7일 AI 업계 소식(블로그·X·논문·GitHub·Reddit)이야.",
     '이 흐름을 종합한 "이번 주 주요 이슈" 요약을 한국어 3~5문장(최대 500자)으로 써.',
     "마케팅 어투 X. 큰 흐름·맥락·의미 위주로. 불릿 없이 평문.",
     "",
@@ -299,16 +245,28 @@ async function regenerateDigest() {
 
 async function main() {
   console.log(`=== poll-rss start ${new Date().toISOString()} ===`);
+  console.log(`Configured sources: ${SOURCES.length}`);
+
   let totalAdded = 0;
-  for (const feed of FEEDS) {
+  for (const adapter of SOURCES) {
+    console.log(`\n--- ${adapter.name} ---`);
+    let items;
     try {
-      const { added } = await pollFeed(feed);
+      items = await adapter.fetch();
+    } catch (e) {
+      console.error(`[${adapter.name}] fetch failed:`, e.message);
+      continue;
+    }
+    console.log(`[${adapter.name}] ${items.length} items returned`);
+    try {
+      const added = await processItems(adapter, items);
       totalAdded += added;
     } catch (e) {
-      console.error(`[${feed.company}] fatal:`, e.message);
+      console.error(`[${adapter.name}] process failed:`, e.message);
     }
   }
-  console.log(`\n${totalAdded} new post(s) ingested.`);
+
+  console.log(`\n${totalAdded} new post(s) ingested across ${SOURCES.length} sources.`);
   await regenerateDigest();
   console.log(`=== poll-rss end ${new Date().toISOString()} ===`);
 }

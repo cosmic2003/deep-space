@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "poll-rss": "node scripts/poll-rss.mjs"
+    "poll-rss": "node scripts/poll-rss.mjs",
+    "sources:dry": "node scripts/dry-run-sources.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",

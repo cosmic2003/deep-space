@@ -75,7 +75,7 @@ export default async function AiPage({ searchParams }: PageProps) {
           )}
 
           <footer className="mt-10 sm:mt-16 pt-6 border-t border-zinc-900 text-xs text-zinc-600 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-            <span>데이터: OpenAI / DeepMind 공식 블로그</span>
+            <span>데이터: 공식 블로그 · GitHub · arXiv · Reddit · Hacker News</span>
             <span>30분마다 자동 갱신</span>
           </footer>
         </section>

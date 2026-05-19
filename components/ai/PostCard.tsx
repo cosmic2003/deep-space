@@ -16,6 +16,9 @@ const SOURCE_LABEL: Record<AIPost["source"], string> = {
   blog: "Blog",
   x: "X",
   paper: "Paper",
+  github: "GitHub",
+  reddit: "Reddit",
+  hn: "HN",
 };
 
 interface Props {
