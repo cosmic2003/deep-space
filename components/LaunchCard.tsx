@@ -29,22 +29,24 @@ export function LaunchCard({ launch }: Props) {
   const isImminent = hoursUntil > 0 && hoursUntil < 6;
   const isVeryClose = hoursUntil > 0 && hoursUntil < 1;
 
-  const borderClass = isVeryClose
-    ? "border-red-500/50 live-soon"
+  // Imminent / very-close override the default glass border tint so the card
+  // visually escalates as launch approaches.
+  const accentBorder = isVeryClose
+    ? "!border-red-400/55 live-soon"
     : isImminent
-      ? "border-sky-500/50"
-      : "border-zinc-700/60";
+      ? "!border-[#c89bff]/55"
+      : "";
 
   return (
     <Link
       href={`/launch/${launch.id}`}
       prefetch
-      className={`group relative block min-w-0 overflow-hidden rounded-xl border bg-zinc-900 ring-1 ring-inset ring-white/5 shadow-md shadow-black/20 transition-all hover:border-zinc-600 hover:bg-zinc-800/80 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/40 ${borderClass}`}
+      className={`aero-glass aero-glass-hover group relative block min-w-0 overflow-hidden rounded-2xl ${accentBorder}`}
       aria-label={`${provider} ${rocket}${mission ? ` — ${mission}` : ""} 자세히 보기`}
     >
       {image && (
         <div
-          className="absolute inset-0 opacity-[0.08] bg-cover bg-center pointer-events-none transition-opacity group-hover:opacity-[0.14]"
+          className="absolute inset-0 opacity-[0.07] bg-cover bg-center pointer-events-none transition-opacity group-hover:opacity-[0.12]"
           style={{ backgroundImage: `url(${image})` }}
           aria-hidden
         />
@@ -53,13 +55,20 @@ export function LaunchCard({ launch }: Props) {
       <div className="relative p-4 sm:p-5 flex flex-col gap-3">
         <header className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="h-5 w-1 rounded-full bg-sky-400 shrink-0" aria-hidden />
-            <span className="text-sm font-bold tracking-tight text-sky-300 truncate">
+            <span
+              className="h-5 w-1 rounded-full shrink-0"
+              style={{ backgroundColor: "#c89bff" }}
+              aria-hidden
+            />
+            <span
+              className="text-sm font-bold tracking-tight truncate"
+              style={{ color: "#c89bff" }}
+            >
               {provider}
             </span>
             {isImminent && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-300 ring-1 ring-inset ring-red-500/40 shrink-0">
-                <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
+              <span className="aero-badge !text-[10px] !py-0.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#c89bff] animate-pulse" />
                 Live
               </span>
             )}
@@ -72,7 +81,7 @@ export function LaunchCard({ launch }: Props) {
             {rocket}
           </h2>
           {mission && (
-            <p className="text-sm text-zinc-300 leading-snug truncate">
+            <p className="text-sm text-[var(--aero-text-secondary)] leading-snug truncate">
               {mission}
             </p>
           )}
@@ -82,9 +91,9 @@ export function LaunchCard({ launch }: Props) {
           <Countdown netIso={launch.net} />
         </div>
 
-        <dl className="grid grid-cols-1 gap-1.5 text-xs text-zinc-300 pt-2 mt-1 border-t border-zinc-700/50">
+        <dl className="grid grid-cols-1 gap-1.5 text-xs pt-2 mt-1 border-t border-[var(--aero-glass-border)]">
           <div className="flex justify-between gap-2 pt-1.5">
-            <dt className="text-zinc-500 uppercase text-[10px] tracking-wider font-semibold self-center shrink-0">
+            <dt className="text-[var(--aero-text-muted)] uppercase text-[10px] tracking-wider font-semibold self-center shrink-0">
               발사 시각
             </dt>
             <dd className="font-mono text-zinc-100 text-right text-xs tabular-nums">
@@ -92,7 +101,7 @@ export function LaunchCard({ launch }: Props) {
             </dd>
           </div>
           <div className="flex justify-between gap-2">
-            <dt className="text-zinc-500 uppercase text-[10px] tracking-wider font-semibold self-center shrink-0">
+            <dt className="text-[var(--aero-text-muted)] uppercase text-[10px] tracking-wider font-semibold self-center shrink-0">
               발사장
             </dt>
             <dd className="text-zinc-100 text-right text-xs truncate min-w-0" title={location}>
@@ -101,7 +110,7 @@ export function LaunchCard({ launch }: Props) {
           </div>
           {orbit && (
             <div className="flex justify-between gap-2">
-              <dt className="text-zinc-500 uppercase text-[10px] tracking-wider font-semibold self-center shrink-0">
+              <dt className="text-[var(--aero-text-muted)] uppercase text-[10px] tracking-wider font-semibold self-center shrink-0">
                 궤도
               </dt>
               <dd className="text-zinc-100 text-right text-xs truncate">{orbit}</dd>
@@ -109,7 +118,7 @@ export function LaunchCard({ launch }: Props) {
           )}
         </dl>
 
-        <div className="flex items-center justify-end text-xs font-medium text-zinc-500 group-hover:text-sky-400 transition-colors">
+        <div className="flex items-center justify-end text-xs font-medium text-[var(--aero-text-muted)] group-hover:text-[#c89bff] transition-colors">
           자세히 보기
           <svg
             viewBox="0 0 24 24"

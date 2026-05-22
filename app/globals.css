@@ -49,3 +49,108 @@ body {
   transform-origin: center;
   transform-box: fill-box;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Aerospace section design system — glass surfaces on a nebula-tinted dark
+   background. All tokens namespaced with `--aero-` and utility classes with
+   `.aero-` so they can't leak into /ai or /semiconductor.
+   ───────────────────────────────────────────────────────────────────────── */
+.aero-scope {
+  --aero-glass-bg:           rgba(18, 22, 38, 0.55);
+  --aero-glass-bg-hover:     rgba(28, 34, 56, 0.65);
+  --aero-glass-border:       rgba(120, 150, 230, 0.14);
+  --aero-glass-border-hover: rgba(120, 150, 230, 0.40);
+  --aero-accent:             #c89bff;
+  --aero-accent-soft:        rgba(200, 155, 255, 0.12);
+  --aero-accent-glow:        rgba(200, 155, 255, 0.40);
+  --aero-text-secondary:     #aeb9e0;
+  --aero-text-muted:         #7e8cba;
+}
+
+.aero-bg {
+  background:
+    radial-gradient(ellipse 80% 50% at 70% -10%, rgba(50, 70, 140, 0.22), transparent),
+    radial-gradient(ellipse 60% 40% at 10% 110%, rgba(90, 50, 140, 0.18), transparent),
+    #06080f;
+  background-attachment: fixed;
+}
+
+.aero-glass {
+  background: var(--aero-glass-bg);
+  border: 1px solid var(--aero-glass-border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.aero-glass-hover {
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease;
+}
+.aero-glass-hover:hover {
+  transform: translateY(-3px);
+  border-color: var(--aero-glass-border-hover);
+  background: var(--aero-glass-bg-hover);
+}
+
+.aero-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--aero-glass-bg);
+  border: 1px solid var(--aero-glass-border);
+  backdrop-filter: blur(10px);
+  color: var(--aero-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.25s ease;
+}
+.aero-pill:hover {
+  color: #fff;
+  border-color: var(--aero-glass-border-hover);
+}
+
+.aero-pill-accent {
+  color: var(--aero-accent);
+  border-color: rgba(200, 155, 255, 0.35);
+  background: var(--aero-accent-soft);
+}
+.aero-pill-accent:hover {
+  box-shadow: 0 0 22px var(--aero-accent-glow);
+  color: #fff;
+}
+
+.aero-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--aero-accent);
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.aero-title-gradient {
+  background: linear-gradient(120deg, #fff, var(--aero-accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.aero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: var(--aero-accent-soft);
+  border: 1px solid rgba(200, 155, 255, 0.3);
+  color: var(--aero-accent);
+  font-weight: 600;
+}

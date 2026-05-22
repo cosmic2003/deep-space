@@ -13,7 +13,7 @@ export default async function Home() {
   }).length;
 
   return (
-    <div className="min-h-screen">
+    <div className="aero-scope aero-bg min-h-screen">
       <Starfield />
       <Header active="aerospace" />
 
@@ -21,10 +21,8 @@ export default async function Home() {
         <section className="mb-6 sm:mb-8">
           <div className="flex items-end justify-between gap-3 sm:gap-6 mb-1 flex-wrap">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-400 mb-2">
-                Aerospace
-              </p>
-              <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-50">
+              <p className="aero-eyebrow mb-2">Aerospace</p>
+              <h2 className="aero-title-gradient text-2xl sm:text-3xl font-semibold tracking-tight">
                 다가오는 발사
               </h2>
             </div>
@@ -37,7 +35,7 @@ export default async function Home() {
               <div className="text-2xl sm:text-3xl font-mono font-medium tabular-nums text-zinc-100">
                 {launches.length}
               </div>
-              <div className="text-xs text-zinc-500 uppercase tracking-wider">
+              <div className="text-[11px] text-[var(--aero-text-muted)] uppercase tracking-wider">
                 upcoming
               </div>
             </div>
@@ -48,7 +46,7 @@ export default async function Home() {
           </div>
 
           {imminent > 0 && (
-            <div className="mt-4 sm:mt-5 inline-flex items-center gap-2 sm:gap-2.5 rounded-full bg-red-500/10 px-3 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base font-semibold text-red-300 ring-1 ring-inset ring-red-500/30">
+            <div className="mt-4 sm:mt-5 inline-flex items-center gap-2 sm:gap-2.5 rounded-full bg-red-500/10 px-3 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base font-semibold text-red-300 ring-1 ring-inset ring-red-500/30 backdrop-blur">
               <span className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-red-400 animate-pulse" />
               <span className="font-mono tabular-nums text-red-200">{imminent}</span>
               <span>개 발사 임박</span>
@@ -67,14 +65,14 @@ export default async function Home() {
           </div>
         )}
 
-        <footer className="mt-10 sm:mt-16 pt-6 border-t border-zinc-900 text-xs text-zinc-600 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <footer className="mt-10 sm:mt-16 pt-6 border-t border-[var(--aero-glass-border)] text-xs text-[var(--aero-text-muted)] flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <span>
             데이터:{" "}
             <a
               href="https://thespacedevs.com/llapi"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-zinc-400 transition-colors"
+              className="hover:text-[var(--aero-accent)] transition-colors"
             >
               Launch Library 2
             </a>
@@ -88,23 +86,25 @@ export default async function Home() {
 
 function StatusLegend() {
   const items = [
-    { code: "GO", desc: "발사 확정", dot: "bg-emerald-400", text: "text-emerald-300", ring: "ring-emerald-500/30" },
-    { code: "TBC", desc: "잠정 확정", dot: "bg-amber-400", text: "text-amber-300", ring: "ring-amber-500/30" },
-    { code: "TBD", desc: "발사일 미정", dot: "bg-zinc-400", text: "text-zinc-200", ring: "ring-zinc-600/40" },
-    { code: "Hold", desc: "발사 보류", dot: "bg-red-400", text: "text-red-300", ring: "ring-red-500/30" },
+    { code: "GO", desc: "발사 확정", dot: "#34d399" },
+    { code: "TBC", desc: "잠정 확정", dot: "#fbbf24" },
+    { code: "TBD", desc: "발사일 미정", dot: "#a1a1aa" },
+    { code: "Hold", desc: "발사 보류", dot: "#f87171" },
   ];
   return (
     <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 self-end">
       {items.map((it) => (
-        <span
-          key={it.code}
-          className={`inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-zinc-900/70 px-2.5 sm:px-3 py-1.5 sm:py-2 ring-1 ring-inset ${it.ring}`}
-        >
-          <span className={`h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full ${it.dot}`} />
-          <span className={`text-xs sm:text-sm font-bold tracking-wide ${it.text}`}>
+        <span key={it.code} className="aero-pill">
+          <span
+            className="h-2 w-2 rounded-full shrink-0"
+            style={{ backgroundColor: it.dot }}
+          />
+          <span className="text-xs font-bold tracking-wide text-white">
             {it.code}
           </span>
-          <span className="text-xs sm:text-sm text-zinc-200">{it.desc}</span>
+          <span className="text-xs text-[var(--aero-text-secondary)]">
+            {it.desc}
+          </span>
         </span>
       ))}
     </div>
@@ -113,11 +113,11 @@ function StatusLegend() {
 
 function EmptyState() {
   return (
-    <div className="rounded-xl border border-zinc-700/60 bg-zinc-900 ring-1 ring-inset ring-white/5 p-10 text-center">
-      <p className="text-zinc-400 text-sm">
+    <div className="aero-glass rounded-2xl p-10 text-center">
+      <p className="text-[var(--aero-text-secondary)] text-sm">
         발사 데이터를 불러올 수 없습니다.
       </p>
-      <p className="text-zinc-600 text-xs mt-1">
+      <p className="text-[var(--aero-text-muted)] text-xs mt-1">
         잠시 후 다시 시도해주세요.
       </p>
     </div>
