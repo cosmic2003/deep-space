@@ -5,7 +5,7 @@ export const metadata = {
   title: "반도체 — Deep Space",
 };
 
-export default function SemiconductorPage() {
+export default async function SemiconductorPage() {
   return (
     <div className="min-h-screen text-zinc-100 relative">
       <Header active="semiconductor" />

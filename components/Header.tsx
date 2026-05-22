@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getUpcomingLaunches } from "@/lib/sources/launchLibrary";
+import { RocketTrack } from "./RocketTrack";
 
 export type Section = "aerospace" | "semiconductor" | "ai";
 
@@ -13,11 +15,21 @@ interface Props {
   active?: Section;
 }
 
-export function Header({ active = "aerospace" }: Props) {
+export async function Header({ active = "aerospace" }: Props) {
+  // Fetch is cached at the lib level (5min revalidate), so this doesn't
+  // multi-fire across pages within a single revalidate window.
+  let nextLaunchIso: string | null = null;
+  try {
+    const launches = await getUpcomingLaunches(1);
+    nextLaunchIso = launches[0]?.net ?? null;
+  } catch {
+    // Network blip — just skip the rocket track this render.
+  }
+
   return (
     <header className="border-b border-zinc-900/80 bg-zinc-950/85 backdrop-blur-md sticky top-0 z-20">
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-3 sm:py-6 flex items-center justify-between gap-3 sm:gap-6">
-        <Link href="/" className="group flex items-center gap-2.5 sm:gap-3.5">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-3 sm:py-6 flex items-center gap-3 sm:gap-6">
+        <Link href="/" className="group flex items-center gap-2.5 sm:gap-3.5 shrink-0">
           <div className="h-9 w-9 sm:h-11 sm:w-11 rounded-xl overflow-hidden ring-1 ring-inset ring-white/10 shadow-lg shadow-sky-500/20 transition-shadow group-hover:shadow-sky-500/40">
             <Image
               src="/logo.png"
@@ -38,7 +50,14 @@ export function Header({ active = "aerospace" }: Props) {
           </div>
         </Link>
 
-        <nav className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-medium">
+        {/* Rocket countdown — hidden on small screens (no room) */}
+        {nextLaunchIso && (
+          <div className="hidden md:block flex-1 max-w-md mx-auto px-2">
+            <RocketTrack targetIso={nextLaunchIso} />
+          </div>
+        )}
+
+        <nav className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-medium shrink-0 ml-auto md:ml-0">
           {NAV.map((item) => {
             const isActive = item.key === active;
             return (

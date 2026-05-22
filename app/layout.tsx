@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://deep-space-umber-gamma.vercel.app"),
   title: "Deep Space — Aerospace & Tech Hub",
   description:
     "로켓 발사·AI·반도체 산업의 최신 소식을 한곳에서 보는 실시간 대시보드.",
