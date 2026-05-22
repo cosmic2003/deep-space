@@ -158,7 +158,6 @@ export function ModelBenchmarks() {
         </h2>
         <p className="mt-2 text-sm text-zinc-400 max-w-xl">
           프론티어 LLM을 코딩 · 추론 · 에이전트 · 가성비 기준으로 비교.
-          카테고리를 바꿔서 정렬해 봐.
         </p>
       </header>
 
