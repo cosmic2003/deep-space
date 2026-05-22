@@ -17,6 +17,13 @@ const DIGEST_MAX_TOKENS     = 2000;
 const DIGEST_LOOKBACK_HOURS = 168; // 7 days
 const DIGEST_LIMIT          = 30;
 
+// Hard ceiling on Gemini calls per cron run (summaries + 1 digest). At 1h
+// cron cadence this caps daily usage at 24 × CAP requests, which keeps us
+// comfortably under the free-tier RPD quota even with occasional 4xx burn.
+// Excess items are left unsummarised — they re-attempt on the next tick.
+const GEMINI_CALL_BUDGET = 25;
+let geminiCallCount = 0;
+
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 const geminiKey   = process.env.GEMINI_API_KEY;
@@ -42,7 +49,16 @@ async function throttleGemini() {
   lastGeminiCall = Date.now();
 }
 
+class BudgetExhaustedError extends Error {
+  constructor() {
+    super(`Gemini call budget (${GEMINI_CALL_BUDGET}) exhausted for this run`);
+    this.code = "BUDGET_EXHAUSTED";
+  }
+}
+
 async function callGemini(prompt, maxTokens) {
+  if (geminiCallCount >= GEMINI_CALL_BUDGET) throw new BudgetExhaustedError();
+  geminiCallCount++;
   // No in-call retries. On 429/503, fail fast and let the next cron tick
   // retry the item via dedup (it's not in DB yet). Retries here just stacked
   // 30-60s sleeps on a transient outage and blew the workflow timeout.
@@ -153,6 +169,7 @@ async function processItems(adapter, items) {
     try {
       summary = await summarize(item);
     } catch (e) {
+      if (e.code === "BUDGET_EXHAUSTED") throw e;
       console.error(`[${adapter.name}] summarize failed for "${item.title}":`, e.message);
       continue;
     }
@@ -243,7 +260,9 @@ async function main() {
   console.log(`Configured sources: ${SOURCES.length}`);
 
   let totalAdded = 0;
+  let budgetHit = false;
   for (const adapter of SOURCES) {
+    if (budgetHit) break;
     console.log(`\n--- ${adapter.name} ---`);
     let items;
     try {
@@ -257,12 +276,24 @@ async function main() {
       const added = await processItems(adapter, items);
       totalAdded += added;
     } catch (e) {
+      if (e.code === "BUDGET_EXHAUSTED") {
+        console.warn(`[budget] ${e.message} — remaining adapters deferred to next cron`);
+        budgetHit = true;
+        break;
+      }
       console.error(`[${adapter.name}] process failed:`, e.message);
     }
   }
 
-  console.log(`\n${totalAdded} new post(s) ingested across ${SOURCES.length} sources.`);
-  await regenerateDigest();
+  console.log(
+    `\n${totalAdded} new post(s) ingested. Gemini calls used: ${geminiCallCount}/${GEMINI_CALL_BUDGET}.`
+  );
+  // Skip digest if we're already over budget — it can wait for the next tick.
+  if (!budgetHit && geminiCallCount < GEMINI_CALL_BUDGET) {
+    await regenerateDigest();
+  } else {
+    console.log("[digest] skipping — Gemini budget exhausted this run");
+  }
   console.log(`=== poll-rss end ${new Date().toISOString()} ===`);
 }
 

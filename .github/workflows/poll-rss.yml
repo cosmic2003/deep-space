@@ -2,8 +2,9 @@ name: Poll AI RSS feeds
 
 on:
   schedule:
-    # every 30 minutes (GitHub Actions cron is best-effort, may delay a few min)
-    - cron: "*/30 * * * *"
+    # Hourly. Gemini free-tier RPD quota can't sustain 30-min polling once all
+    # adapters are wired up; 1h is enough to stay current.
+    - cron: "0 * * * *"
   workflow_dispatch: {}
 
 concurrency:
