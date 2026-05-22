@@ -52,7 +52,7 @@ export async function Header({ active = "aerospace" }: Props) {
 
         {/* Rocket countdown — hidden on small screens (no room) */}
         {nextLaunchIso && (
-          <div className="hidden md:block flex-1 max-w-md mx-auto px-2">
+          <div className="hidden md:block flex-1 max-w-xl mx-auto px-4">
             <RocketTrack targetIso={nextLaunchIso} />
           </div>
         )}
