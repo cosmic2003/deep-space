@@ -179,41 +179,6 @@ export async function getLaunchDetail(id: string): Promise<LaunchDetail | null> 
   }
 }
 
-export interface ProviderRockets {
-  providerId: number | string;
-  providerName: string;
-  rockets: RocketConfiguration[];
-}
-
-export function groupRocketsByProvider(launches: Launch[]): ProviderRockets[] {
-  const map = new Map<string, ProviderRockets>();
-  const seenRocketIds = new Map<string, Set<number | string>>();
-
-  for (const l of launches) {
-    const pId = l.launch_service_provider.id ?? l.launch_service_provider.name;
-    const pKey = String(pId);
-    if (!map.has(pKey)) {
-      map.set(pKey, {
-        providerId: pId,
-        providerName: l.launch_service_provider.name,
-        rockets: [],
-      });
-      seenRocketIds.set(pKey, new Set());
-    }
-    const config = l.rocket.configuration;
-    const rId = config.id ?? config.full_name ?? config.name;
-    const seen = seenRocketIds.get(pKey)!;
-    if (!seen.has(rId)) {
-      seen.add(rId);
-      map.get(pKey)!.rockets.push(config);
-    }
-  }
-
-  return Array.from(map.values()).sort((a, b) =>
-    a.providerName.localeCompare(b.providerName)
-  );
-}
-
 export function pickLiveStream(launch: Launch): LaunchVideo | null {
   if (!launch.vidURLs || launch.vidURLs.length === 0) return null;
   const yt = launch.vidURLs.find((v) => /youtube|youtu\.be/i.test(v.url));

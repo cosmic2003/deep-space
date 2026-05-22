@@ -39,7 +39,7 @@ export function LaunchCard({ launch }: Props) {
     <Link
       href={`/launch/${launch.id}`}
       prefetch
-      className={`group relative block overflow-hidden rounded-xl border bg-zinc-900 ring-1 ring-inset ring-white/5 shadow-md shadow-black/20 transition-all hover:border-zinc-600 hover:bg-zinc-800/80 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/40 ${borderClass}`}
+      className={`group relative block min-w-0 overflow-hidden rounded-xl border bg-zinc-900 ring-1 ring-inset ring-white/5 shadow-md shadow-black/20 transition-all hover:border-zinc-600 hover:bg-zinc-800/80 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/40 ${borderClass}`}
       aria-label={`${provider} ${rocket}${mission ? ` — ${mission}` : ""} 자세히 보기`}
     >
       {image && (
@@ -50,60 +50,77 @@ export function LaunchCard({ launch }: Props) {
         />
       )}
 
-      <div className="relative p-5 sm:p-7 flex flex-col gap-4 sm:gap-5">
-        <header className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-            <span className="h-7 sm:h-8 w-1.5 rounded-full bg-sky-400 shrink-0" aria-hidden />
-            <span className="text-xl sm:text-2xl font-bold tracking-tight text-sky-300 truncate">
+      <div className="relative p-4 sm:p-5 flex flex-col gap-3">
+        <header className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="h-5 w-1 rounded-full bg-sky-400 shrink-0" aria-hidden />
+            <span className="text-sm font-bold tracking-tight text-sky-300 truncate">
               {provider}
             </span>
             {isImminent && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2 sm:px-2.5 py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-red-300 ring-1 ring-inset ring-red-500/40 shrink-0">
+              <span className="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-300 ring-1 ring-inset ring-red-500/40 shrink-0">
                 <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
-                Live Soon
+                Live
               </span>
             )}
           </div>
           <StatusBadge status={launch.status} />
         </header>
 
-        <div className="space-y-1 sm:space-y-1.5">
-          <h2 className="text-2xl sm:text-3xl font-bold leading-tight text-zinc-50 tracking-tight">
+        <div className="space-y-0.5 min-w-0">
+          <h2 className="text-base sm:text-lg font-bold leading-tight text-zinc-50 tracking-tight break-words">
             {rocket}
           </h2>
           {mission && (
-            <p className="text-base sm:text-lg text-zinc-300 leading-snug">{mission}</p>
+            <p className="text-sm text-zinc-300 leading-snug truncate">
+              {mission}
+            </p>
           )}
         </div>
 
-        <div className="pt-1 scale-110 sm:scale-[1.3] origin-left inline-block">
+        <div>
           <Countdown netIso={launch.net} />
         </div>
 
-        <dl className="grid grid-cols-1 gap-2 sm:gap-2.5 text-sm text-zinc-300 pt-2 sm:pt-3 mt-1 sm:mt-2 border-t border-zinc-700/50">
-          <div className="flex justify-between gap-3 sm:gap-4 pt-2 sm:pt-3">
-            <dt className="text-zinc-500 uppercase text-xs sm:text-base tracking-wider font-semibold self-center shrink-0">발사 시각</dt>
-            <dd className="font-mono text-zinc-100 text-right text-sm sm:text-xl tabular-nums">
+        <dl className="grid grid-cols-1 gap-1.5 text-xs text-zinc-300 pt-2 mt-1 border-t border-zinc-700/50">
+          <div className="flex justify-between gap-2 pt-1.5">
+            <dt className="text-zinc-500 uppercase text-[10px] tracking-wider font-semibold self-center shrink-0">
+              발사 시각
+            </dt>
+            <dd className="font-mono text-zinc-100 text-right text-xs tabular-nums">
               {formatNetUtc(launch.net)}
             </dd>
           </div>
-          <div className="flex justify-between gap-3 sm:gap-4">
-            <dt className="text-zinc-500 uppercase text-xs sm:text-base tracking-wider font-semibold self-center shrink-0">발사장</dt>
-            <dd className="text-zinc-100 text-right text-sm sm:text-xl truncate min-w-0" title={location}>
+          <div className="flex justify-between gap-2">
+            <dt className="text-zinc-500 uppercase text-[10px] tracking-wider font-semibold self-center shrink-0">
+              발사장
+            </dt>
+            <dd className="text-zinc-100 text-right text-xs truncate min-w-0" title={location}>
               {padName} · {location}
             </dd>
           </div>
           {orbit && (
-            <div className="flex justify-between gap-3 sm:gap-4">
-              <dt className="text-zinc-500 uppercase text-xs sm:text-base tracking-wider font-semibold self-center shrink-0">궤도</dt>
-              <dd className="text-zinc-100 text-right text-sm sm:text-xl">{orbit}</dd>
+            <div className="flex justify-between gap-2">
+              <dt className="text-zinc-500 uppercase text-[10px] tracking-wider font-semibold self-center shrink-0">
+                궤도
+              </dt>
+              <dd className="text-zinc-100 text-right text-xs truncate">{orbit}</dd>
             </div>
           )}
         </dl>
 
-        <div className="flex items-center justify-end text-sm font-medium text-zinc-500 group-hover:text-sky-400 transition-colors">
+        <div className="flex items-center justify-end text-xs font-medium text-zinc-500 group-hover:text-sky-400 transition-colors">
           자세히 보기
-          <svg viewBox="0 0 24 24" className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <svg
+            viewBox="0 0 24 24"
+            className="ml-1 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
             <path d="M9 6l6 6-6 6" />
           </svg>
         </div>
