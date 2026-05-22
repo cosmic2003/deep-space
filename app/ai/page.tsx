@@ -1,5 +1,6 @@
 import { CompanyFilter } from "@/components/ai/CompanyFilter";
 import { DailyDigest } from "@/components/ai/DailyDigest";
+import { ModelBenchmarks } from "@/components/ai/ModelBenchmarks";
 import { PostCard } from "@/components/ai/PostCard";
 import { Header } from "@/components/Header";
 import { getDailyDigest, getRecentPosts } from "@/lib/ai/source";
@@ -39,6 +40,8 @@ export default async function AiPage({ searchParams }: PageProps) {
 
       <main className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8 sm:space-y-12">
         {digest && <DailyDigest digest={digest} />}
+
+        <ModelBenchmarks />
 
         <section>
           <header className="flex items-end justify-between gap-3 sm:gap-6 mb-5 sm:mb-6 flex-wrap">
