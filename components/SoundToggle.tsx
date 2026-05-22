@@ -2,24 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const STORAGE_KEY = "soundPref";
 const SRC = "/audio/ambient.mp3";
 const TARGET_VOLUME = 0.35;       // ambient — never let it dominate the UI
 const FADE_IN_MS = 1400;
 const FADE_OUT_MS = 900;
 
 export function SoundToggle() {
+  // Always boot in the off state. Browser autoplay policies require a real
+  // user gesture per session, so persisting "on" across reloads just produced
+  // a confusing two-click bug (button looks on, but nothing's playing).
   const [on, setOn] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const rafRef = useRef<number | null>(null);
-
-  // Restore the visual state from the last visit. We don't auto-start audio:
-  // browser autoplay policies require a real user gesture, so the user has
-  // to click once per session even if their saved preference is "on".
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.localStorage.getItem(STORAGE_KEY) === "on") setOn(true);
-  }, []);
 
   // Stop any in-flight fade when the component unmounts (page nav, hot reload).
   useEffect(() => {
@@ -36,9 +30,12 @@ export function SoundToggle() {
   function ensureAudio(): HTMLAudioElement {
     if (audioRef.current) return audioRef.current;
     const audio = new Audio(SRC);
-    audio.loop = true;
+    audio.loop = false;
     audio.preload = "auto";
     audio.volume = 0;
+    // When the track ends naturally, flip the UI off so the equalizer stops
+    // dancing and the user can click again to replay if they want.
+    audio.addEventListener("ended", () => setOn(false));
     audioRef.current = audio;
     return audio;
   }
@@ -63,15 +60,12 @@ export function SoundToggle() {
   const toggle = async () => {
     const next = !on;
     setOn(next);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, next ? "on" : "off");
-    } catch {
-      // localStorage can throw in private mode / quota — ignore.
-    }
 
     const audio = ensureAudio();
     if (next) {
       try {
+        // Restart from the top if the track ended previously.
+        if (audio.ended || audio.currentTime > 0) audio.currentTime = 0;
         audio.volume = 0;
         await audio.play();
         fade(audio, TARGET_VOLUME, FADE_IN_MS);
@@ -79,7 +73,6 @@ export function SoundToggle() {
         // Autoplay policy or load error — revert the UI state.
         console.warn("[SoundToggle] play failed:", e);
         setOn(false);
-        try { window.localStorage.setItem(STORAGE_KEY, "off"); } catch {}
       }
     } else {
       fade(audio, 0, FADE_OUT_MS, () => audio.pause());
