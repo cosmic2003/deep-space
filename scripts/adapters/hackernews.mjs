@@ -83,6 +83,12 @@ export class HackerNewsAdapter extends SourceAdapter {
       const externalUrl = h.url || `https://news.ycombinator.com/item?id=${h.objectID}`;
       const hnUrl = `https://news.ycombinator.com/item?id=${h.objectID}`;
       const body = stripHtml(h.story_text ?? "").slice(0, 2000);
+      // Tags become visible chips in the UI; keep them short. Full URL caused
+      // mobile card overflow. Domain conveys "where does this link" cleanly.
+      const domain = (() => {
+        try { return new URL(externalUrl).hostname.replace(/^www\./, ""); }
+        catch { return null; }
+      })();
       out.push({
         id: `hn:${h.objectID}`,
         company,
@@ -93,7 +99,7 @@ export class HackerNewsAdapter extends SourceAdapter {
         url: hnUrl,
         publishedAt: new Date(h.created_at).toISOString(),
         source: "hn",
-        tags: [String(h.points), externalUrl],
+        tags: [`${h.points}점`, ...(domain ? [domain] : [])],
       });
       if (out.length >= maxItems) break;
     }

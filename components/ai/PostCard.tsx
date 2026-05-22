@@ -29,7 +29,7 @@ interface Props {
 export function PostCard({ post, now }: Props) {
   const c = COMPANY_MAP[post.company];
   return (
-    <article className="group relative rounded-xl border border-zinc-800 bg-zinc-900 ring-1 ring-inset ring-white/5 p-5 sm:p-6 transition-all hover:border-zinc-700 hover:bg-zinc-800/60">
+    <article className="group relative min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 ring-1 ring-inset ring-white/5 p-5 sm:p-6 transition-all hover:border-zinc-700 hover:bg-zinc-800/60">
       <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 mb-3">
         <span
           className={`inline-flex items-center gap-2 rounded-full ${c.bg} px-3 py-1 text-xs font-bold tracking-wide ring-1 ring-inset ${c.ring} ${c.text}`}
@@ -47,7 +47,7 @@ export function PostCard({ post, now }: Props) {
         </div>
       </header>
 
-      <h3 className="text-lg font-semibold leading-snug text-zinc-50 mb-2">
+      <h3 className="text-lg font-semibold leading-snug text-zinc-50 mb-2 break-words">
         <a
           href={post.url}
           target="_blank"
@@ -58,14 +58,16 @@ export function PostCard({ post, now }: Props) {
         </a>
       </h3>
 
-      <p className="text-sm leading-relaxed text-zinc-400">{post.summary}</p>
+      <p className="text-sm leading-relaxed text-zinc-400 break-words">
+        {post.summary}
+      </p>
 
       {post.tags && post.tags.length > 0 && (
         <ul className="mt-4 flex flex-wrap gap-1.5">
           {post.tags.map((t) => (
             <li
               key={t}
-              className="rounded bg-zinc-800/60 px-2 py-0.5 text-[11px] text-zinc-500"
+              className="max-w-full truncate rounded bg-zinc-800/60 px-2 py-0.5 text-[11px] text-zinc-500"
             >
               {t}
             </li>
