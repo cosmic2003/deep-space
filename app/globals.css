@@ -154,3 +154,103 @@ body {
   color: var(--aero-accent);
   font-weight: 600;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   SoundToggle — floating ambient-music button (bottom right, all pages)
+   ───────────────────────────────────────────────────────────────────────── */
+.sound-toggle {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 1px solid rgba(200, 155, 255, 0.25);
+  background: rgba(200, 155, 255, 0.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #c89bff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: all 0.35s ease;
+}
+.sound-toggle:hover {
+  transform: translateY(-2px);
+  border-color: rgba(200, 155, 255, 0.5);
+}
+
+/* Off state: subtle halo pulse drawing the eye to the button */
+.sound-toggle:not(.on)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(200, 155, 255, 0.3);
+  animation: haloPulse 2.8s ease-out infinite;
+}
+@keyframes haloPulse {
+  0%        { box-shadow: 0 0 0 0 rgba(200, 155, 255, 0.35); }
+  70%, 100% { box-shadow: 0 0 0 14px rgba(200, 155, 255, 0); }
+}
+
+/* On state: persistent glow */
+.sound-toggle.on {
+  border-color: rgba(200, 155, 255, 0.6);
+  background: rgba(200, 155, 255, 0.12);
+  box-shadow: 0 0 22px rgba(200, 155, 255, 0.4);
+}
+
+.sound-toggle .eq {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 22px;
+}
+.sound-toggle .eq span {
+  width: 3px;
+  border-radius: 2px;
+  background: currentColor;
+  height: 6px;
+}
+
+/* Off: bars breathe gently to suggest "ready to play" */
+.sound-toggle:not(.on) .eq span {
+  animation: barBreathe 3s ease-in-out infinite;
+}
+.sound-toggle:not(.on) .eq span:nth-child(2) { animation-delay: 0.4s; }
+.sound-toggle:not(.on) .eq span:nth-child(3) { animation-delay: 0.8s; }
+.sound-toggle:not(.on) .eq span:nth-child(4) { animation-delay: 1.2s; }
+@keyframes barBreathe {
+  0%, 100% { height: 5px;  opacity: 0.55; }
+  50%      { height: 11px; opacity: 0.9; }
+}
+
+/* On: bars dance like a real equalizer */
+.sound-toggle.on .eq span {
+  animation: barDance 0.9s ease-in-out infinite;
+}
+.sound-toggle.on .eq span:nth-child(2) { animation-delay: 0.15s; }
+.sound-toggle.on .eq span:nth-child(3) { animation-delay: 0.3s; }
+.sound-toggle.on .eq span:nth-child(4) { animation-delay: 0.45s; }
+@keyframes barDance {
+  0%, 100% { height: 5px; }
+  50%      { height: 20px; }
+}
+
+.sound-toggle .mute-slash {
+  position: absolute;
+  width: 30px;
+  height: 2px;
+  background: currentColor;
+  transform: rotate(-45deg);
+  border-radius: 2px;
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sound-toggle::before,
+  .sound-toggle .eq span { animation: none; }
+}
