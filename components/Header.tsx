@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export type Section = "aerospace" | "semiconductor" | "ai";
@@ -17,8 +18,15 @@ export function Header({ active = "aerospace" }: Props) {
     <header className="border-b border-zinc-900/80 bg-zinc-950/85 backdrop-blur-md sticky top-0 z-20">
       <div className="w-full px-4 sm:px-6 lg:px-8 py-3 sm:py-6 flex items-center justify-between gap-3 sm:gap-6">
         <Link href="/" className="group flex items-center gap-2.5 sm:gap-3.5">
-          <div className="h-9 w-9 sm:h-11 sm:w-11 rounded-xl bg-gradient-to-br from-sky-400 to-indigo-500 flex items-center justify-center text-zinc-950 font-bold text-base sm:text-lg shadow-lg shadow-sky-500/20 transition-shadow group-hover:shadow-sky-500/40">
-            D
+          <div className="h-9 w-9 sm:h-11 sm:w-11 rounded-xl overflow-hidden ring-1 ring-inset ring-white/10 shadow-lg shadow-sky-500/20 transition-shadow group-hover:shadow-sky-500/40">
+            <Image
+              src="/logo.png"
+              alt="Deep Space"
+              width={44}
+              height={44}
+              priority
+              className="h-full w-full object-cover"
+            />
           </div>
           <div>
             <h1 className="text-base sm:text-xl font-bold tracking-tight text-zinc-50 leading-tight">

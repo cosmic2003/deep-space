@@ -15,7 +15,22 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Deep Space — Aerospace & Tech Hub",
-  description: "Real-time dashboard for rocket launches, semiconductor, and AI events.",
+  description:
+    "로켓 발사·AI·반도체 산업의 최신 소식을 한곳에서 보는 실시간 대시보드.",
+  openGraph: {
+    title: "Deep Space — Aerospace & Tech Hub",
+    description:
+      "로켓 발사·AI·반도체 산업의 최신 소식을 한곳에서 보는 실시간 대시보드.",
+    type: "website",
+    locale: "ko_KR",
+    siteName: "Deep Space",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Deep Space — Aerospace & Tech Hub",
+    description:
+      "로켓 발사·AI·반도체 산업의 최신 소식을 한곳에서 보는 실시간 대시보드.",
+  },
 };
 
 export default function RootLayout({
