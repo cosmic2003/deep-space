@@ -67,14 +67,34 @@ create table if not exists daily_digest (
 );
 
 -- ──────────────────────────────────────────────────────────────────────────────
+-- space_digest
+--   LLM-curated weekly digest of space-news articles. Multiple rows kept for
+--   history; frontend reads the latest by generated_at. See db/migrations/004.
+-- ──────────────────────────────────────────────────────────────────────────────
+
+create table if not exists space_digest (
+  id            bigint generated always as identity primary key,
+  generated_at  timestamptz not null default now(),
+  summary       text        not null,
+  items         jsonb       not null default '[]'::jsonb,
+  source_count  int         not null,
+  window_days   int         not null
+);
+
+create index if not exists space_digest_generated_at_desc
+  on space_digest (generated_at desc);
+
+-- ──────────────────────────────────────────────────────────────────────────────
 -- Row Level Security — public read, service_role writes (bypasses RLS)
 -- ──────────────────────────────────────────────────────────────────────────────
 
-alter table ai_posts     enable row level security;
-alter table daily_digest enable row level security;
+alter table ai_posts      enable row level security;
+alter table daily_digest  enable row level security;
+alter table space_digest  enable row level security;
 
 drop policy if exists "ai_posts_public_read"      on ai_posts;
 drop policy if exists "daily_digest_public_read"  on daily_digest;
+drop policy if exists "space_digest_public_read"  on space_digest;
 
 create policy "ai_posts_public_read"
   on ai_posts for select
@@ -83,6 +103,11 @@ create policy "ai_posts_public_read"
 
 create policy "daily_digest_public_read"
   on daily_digest for select
+  to anon, authenticated
+  using (true);
+
+create policy "space_digest_public_read"
+  on space_digest for select
   to anon, authenticated
   using (true);
 

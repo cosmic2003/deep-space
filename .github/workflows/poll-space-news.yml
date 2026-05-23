@@ -1,0 +1,35 @@
+name: Poll space news (weekly digest)
+
+on:
+  schedule:
+    # Daily at 23:00 UTC = 08:00 KST. One Gemini call/day is cheap.
+    - cron: "0 23 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: poll-space-news
+  cancel-in-progress: false
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Korean space-news digest
+        run: npm run poll-space-news
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

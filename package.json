@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "poll-rss": "node scripts/poll-rss.mjs",
+    "poll-space-news": "node scripts/poll-space-news.mjs",
     "sources:dry": "node scripts/dry-run-sources.mjs"
   },
   "dependencies": {
