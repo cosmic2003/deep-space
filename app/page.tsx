@@ -1,12 +1,18 @@
 import { Header } from "@/components/Header";
 import { LaunchCard } from "@/components/LaunchCard";
+import { SpaceNewsCard } from "@/components/SpaceNewsCard";
 import { Starfield } from "@/components/Starfield";
 import { getUpcomingLaunches } from "@/lib/sources/launchLibrary";
+import { getSpaceNews } from "@/lib/sources/spaceflightNews";
 
 export const revalidate = 300;
 
 export default async function Home() {
-  const launches = await getUpcomingLaunches(12);
+  const [launches, articles] = await Promise.all([
+    getUpcomingLaunches(12),
+    getSpaceNews({ days: 7, limit: 9 }),
+  ]);
+  const renderedAt = Date.now();
   const imminent = launches.filter((l) => {
     const h = (new Date(l.net).getTime() - Date.now()) / 3_600_000;
     return h > 0 && h < 6;
@@ -63,6 +69,25 @@ export default async function Home() {
               <LaunchCard key={l.id} launch={l} />
             ))}
           </div>
+        )}
+
+        {articles.length > 0 && (
+          <section className="mt-12 sm:mt-16">
+            <header className="mb-5 sm:mb-6">
+              <p className="aero-eyebrow mb-2">News</p>
+              <h2 className="aero-title-gradient text-2xl sm:text-3xl font-semibold tracking-tight">
+                우주 뉴스
+              </h2>
+              <p className="mt-1 text-xs text-[var(--aero-text-muted)]">
+                지난 7일 · 출처 Spaceflight News API
+              </p>
+            </header>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {articles.map((a) => (
+                <SpaceNewsCard key={a.id} article={a} nowMs={renderedAt} />
+              ))}
+            </div>
+          </section>
         )}
 
         <footer className="mt-10 sm:mt-16 pt-6 border-t border-[var(--aero-glass-border)] text-xs text-[var(--aero-text-muted)] flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
