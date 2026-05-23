@@ -71,35 +71,51 @@ function buildDigestPrompt(articles) {
 ${JSON.stringify(articles, null, 2)}`;
 }
 
+// Daily cron makes exactly one Gemini call. If that call fails on a transient
+// 429/503/500, we lose the day's digest until tomorrow — so retry with backoff
+// here is worth the wall-clock cost (unlike the per-item AI cron).
+const TRANSIENT_STATUSES = new Set([429, 500, 502, 503, 504]);
+const RETRY_DELAYS_MS = [20_000, 45_000, 90_000];
+
 async function callGeminiJson(prompt) {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          maxOutputTokens: DIGEST_MAX_TOKENS,
-          temperature: 0.2,
-          responseMimeType: "application/json",
-          thinkingConfig: { thinkingBudget: 0 },
-        },
-      }),
+  let lastErr;
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            maxOutputTokens: DIGEST_MAX_TOKENS,
+            temperature: 0.2,
+            responseMimeType: "application/json",
+            thinkingConfig: { thinkingBudget: 0 },
+          },
+        }),
+      }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      const finishReason = data?.candidates?.[0]?.finishReason;
+      if (finishReason && finishReason !== "STOP") {
+        console.warn(`Gemini finished with ${finishReason} (not STOP) — output may be truncated`);
+      }
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+      if (!text) throw new Error("Gemini returned empty text");
+      return JSON.parse(text);
     }
-  );
-  if (!res.ok) {
     const body = await res.text();
-    throw new Error(`Gemini ${res.status}: ${body.slice(0, 300)}`);
+    lastErr = new Error(`Gemini ${res.status}: ${body.slice(0, 300)}`);
+    if (!TRANSIENT_STATUSES.has(res.status) || attempt === RETRY_DELAYS_MS.length) {
+      throw lastErr;
+    }
+    const wait = RETRY_DELAYS_MS[attempt];
+    console.warn(`Gemini ${res.status} on attempt ${attempt + 1}; sleeping ${wait / 1000}s and retrying`);
+    await new Promise((r) => setTimeout(r, wait));
   }
-  const data = await res.json();
-  const finishReason = data?.candidates?.[0]?.finishReason;
-  if (finishReason && finishReason !== "STOP") {
-    console.warn(`Gemini finished with ${finishReason} (not STOP) — output may be truncated`);
-  }
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
-  if (!text) throw new Error("Gemini returned empty text");
-  return JSON.parse(text);
+  throw lastErr ?? new Error("Gemini: max retries exceeded");
 }
 
 function isValidDigest(obj) {
