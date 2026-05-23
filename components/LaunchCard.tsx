@@ -97,9 +97,19 @@ export function LaunchCard({ launch }: Props) {
 
       <div className="relative p-5">
         <div className="flex items-start justify-between gap-3">
-          <span className="aero-badge max-w-full truncate" title={provider}>
+          <h3
+            className="text-lg sm:text-xl font-bold tracking-tight truncate min-w-0 leading-tight"
+            style={{
+              backgroundImage:
+                "linear-gradient(120deg, #ffd1e3, #d4b3ff 45%, #b3d4ff)",
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              color: "transparent",
+            }}
+            title={provider}
+          >
             {provider}
-          </span>
+          </h3>
           <StatusBadge status={launch.status} />
         </div>
 
