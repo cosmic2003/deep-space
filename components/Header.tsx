@@ -7,8 +7,8 @@ export type Section = "aerospace" | "semiconductor" | "ai";
 
 const NAV: Array<{ key: Section; label: string; href: string }> = [
   { key: "aerospace", label: "항공우주", href: "/" },
-  { key: "semiconductor", label: "반도체", href: "/semiconductor" },
   { key: "ai", label: "AI", href: "/ai" },
+  { key: "semiconductor", label: "반도체", href: "/semiconductor" },
 ];
 
 interface Props {

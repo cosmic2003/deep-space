@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SoundToggle } from "@/components/SoundToggle";
+import { SwipeNavigator } from "@/components/SwipeNavigator";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -52,6 +53,7 @@ export default function RootLayout({
           {modal}
         </div>
         <SoundToggle />
+        <SwipeNavigator />
       </body>
     </html>
   );
