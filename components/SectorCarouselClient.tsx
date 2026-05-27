@@ -1,0 +1,154 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import type { ReactNode } from "react";
+
+const SECTORS = ["/", "/ai", "/semiconductor"];
+const EASE = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+
+function pathToIndex(pathname: string) {
+  const idx = SECTORS.indexOf(pathname);
+  return idx >= 0 ? idx : 0;
+}
+
+interface Props {
+  children: ReactNode;       // page.tsx 출력 (search params 있을 때 폴백)
+  aerospace: ReactNode;
+  ai: ReactNode;
+  semiconductor: ReactNode;
+  modal: ReactNode;
+}
+
+export function SectorCarouselClient({ children, aerospace, ai, semiconductor, modal }: Props) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const trackRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const curIdx = useRef(pathToIndex(pathname));
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const touchStartTime = useRef(0);
+  const isHoriz = useRef<boolean | null>(null);
+
+  const slideTo = (index: number, animated: boolean) => {
+    const el = trackRef.current;
+    if (!el) return;
+    el.style.transition = animated ? `transform 0.3s ${EASE}` : "none";
+    el.style.transform = `translateX(${-index * 100}vw)`;
+    curIdx.current = index;
+  };
+
+  // 초기 위치 (하이드레이션 후 즉시)
+  useEffect(() => {
+    slideTo(pathToIndex(pathname), false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 헤더 클릭 등 Next.js 라우터 이동 시 동기화
+  useEffect(() => {
+    if (searchParams.size > 0) return;
+    slideTo(pathToIndex(pathname), true);
+  }, [pathname, searchParams]);
+
+  // 브라우저 뒤로/앞으로
+  useEffect(() => {
+    const onPop = () => slideTo(pathToIndex(window.location.pathname), true);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  // 스와이프
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+
+    const onStart = (e: TouchEvent) => {
+      touchStartX.current = e.touches[0].clientX;
+      touchStartY.current = e.touches[0].clientY;
+      touchStartTime.current = Date.now();
+      isHoriz.current = null;
+    };
+
+    const onMove = (e: TouchEvent) => {
+      const dx = e.touches[0].clientX - touchStartX.current;
+      const dy = e.touches[0].clientY - touchStartY.current;
+
+      if (isHoriz.current === null) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        isHoriz.current = Math.abs(dx) > Math.abs(dy) * 1.5;
+      }
+      if (!isHoriz.current) return;
+      e.preventDefault();
+
+      const cur = curIdx.current;
+      const base = -cur * window.innerWidth;
+      const rubber = (cur <= 0 && dx > 0) || (cur >= SECTORS.length - 1 && dx < 0);
+      const offset = rubber ? dx * 0.2 : dx;
+
+      const el = trackRef.current;
+      if (!el) return;
+      el.style.transition = "none";
+      el.style.transform = `translateX(${base + offset}px)`;
+    };
+
+    const onEnd = (e: TouchEvent) => {
+      if (!isHoriz.current) return;
+
+      const dx = e.changedTouches[0].clientX - touchStartX.current;
+      const dt = Math.max(1, Date.now() - touchStartTime.current);
+      const velocity = Math.abs(dx) / dt;
+      const pass = Math.abs(dx) >= 50 || velocity >= 0.4;
+      const cur = curIdx.current;
+
+      if (pass && dx < 0 && cur < SECTORS.length - 1) {
+        const next = cur + 1;
+        slideTo(next, true);
+        window.history.pushState(null, "", SECTORS[next]);
+      } else if (pass && dx > 0 && cur > 0) {
+        const prev = cur - 1;
+        slideTo(prev, true);
+        window.history.pushState(null, "", SECTORS[prev]);
+      } else {
+        slideTo(cur, true); // 스냅백
+      }
+    };
+
+    wrap.addEventListener("touchstart", onStart, { passive: true });
+    wrap.addEventListener("touchmove", onMove, { passive: false });
+    wrap.addEventListener("touchend", onEnd, { passive: true });
+    return () => {
+      wrap.removeEventListener("touchstart", onStart);
+      wrap.removeEventListener("touchmove", onMove);
+      wrap.removeEventListener("touchend", onEnd);
+    };
+  }, []);
+
+  // company 필터 등 search params 있을 땐 일반 페이지 렌더
+  if (searchParams.size > 0) {
+    return (
+      <>
+        {children}
+        {modal}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div ref={wrapRef} style={{ overflow: "hidden", width: "100%" }}>
+        <div
+          ref={trackRef}
+          style={{ display: "flex", willChange: "transform" }}
+        >
+          {[aerospace, ai, semiconductor].map((section, i) => (
+            <div key={i} style={{ width: "100vw", flexShrink: 0 }}>
+              {section}
+            </div>
+          ))}
+        </div>
+      </div>
+      {modal}
+    </>
+  );
+}

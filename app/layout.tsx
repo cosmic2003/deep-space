@@ -1,8 +1,16 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import { SoundToggle } from "@/components/SoundToggle";
-import { SwipeContainer } from "@/components/SwipeContainer";
+import { SectorCarouselClient } from "@/components/SectorCarouselClient";
+import { AerospaceSector } from "@/components/sectors/AerospaceSector";
+import { AiSector } from "@/components/sectors/AiSector";
+import { SemiconductorSector } from "@/components/sectors/SemiconductorSector";
+import { getUpcomingLaunches } from "@/lib/sources/launchLibrary";
+import { getLatestSpaceDigest } from "@/lib/space/digest";
 import "./globals.css";
+
+export const revalidate = 300;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,25 +43,34 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
   modal,
 }: Readonly<{
   children: React.ReactNode;
   modal: React.ReactNode;
 }>) {
+  const [launches, digest] = await Promise.all([
+    getUpcomingLaunches(12),
+    getLatestSpaceDigest(),
+  ]);
+
   return (
     <html
       lang="ko"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-[#202124] text-zinc-100">
-        <SwipeContainer>
-          <div className="relative z-10">
+        <Suspense fallback={<>{children}{modal}</>}>
+          <SectorCarouselClient
+            aerospace={<AerospaceSector launches={launches} digest={digest} />}
+            ai={<AiSector />}
+            semiconductor={<SemiconductorSector />}
+            modal={modal}
+          >
             {children}
-            {modal}
-          </div>
-        </SwipeContainer>
+          </SectorCarouselClient>
+        </Suspense>
         <SoundToggle />
       </body>
     </html>

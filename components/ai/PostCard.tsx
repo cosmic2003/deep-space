@@ -1,3 +1,5 @@
+"use client";
+
 import type { AIPost } from "@/lib/ai/types";
 import { COMPANY_MAP } from "@/lib/ai/types";
 
