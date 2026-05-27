@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
 import { SoundToggle } from "@/components/SoundToggle";
+import { Header } from "@/components/Header";
 import { SectorCarouselClient } from "@/components/SectorCarouselClient";
 import { AerospaceSector } from "@/components/sectors/AerospaceSector";
 import { AiSector } from "@/components/sectors/AiSector";
@@ -60,17 +61,20 @@ export default async function RootLayout({
       lang="ko"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-[#202124] text-zinc-100">
-        <Suspense fallback={<>{children}{modal}</>}>
-          <SectorCarouselClient
-            aerospace={<AerospaceSector launches={launches} digest={digest} />}
-            ai={<AiSector />}
-            semiconductor={<SemiconductorSector />}
-            modal={modal}
-          >
-            {children}
-          </SectorCarouselClient>
-        </Suspense>
+      <body className="h-[100dvh] flex flex-col bg-[#202124] text-zinc-100 overflow-hidden">
+        <Header />
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <Suspense fallback={<div className="h-full overflow-y-auto">{children}{modal}</div>}>
+            <SectorCarouselClient
+              aerospace={<AerospaceSector launches={launches} digest={digest} />}
+              ai={<AiSector />}
+              semiconductor={<SemiconductorSector />}
+              modal={modal}
+            >
+              {children}
+            </SectorCarouselClient>
+          </Suspense>
+        </div>
         <SoundToggle />
       </body>
     </html>

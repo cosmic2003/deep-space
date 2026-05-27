@@ -37,6 +37,7 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
     el.style.transition = animated ? `transform 0.3s ${EASE}` : "none";
     el.style.transform = `translateX(${-index * 100}vw)`;
     curIdx.current = index;
+    window.dispatchEvent(new CustomEvent("sectorchange", { detail: SECTORS[index] }));
   };
 
   // 초기 위치 (하이드레이션 후 즉시)
@@ -136,13 +137,13 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
 
   return (
     <>
-      <div ref={wrapRef} style={{ overflow: "hidden", width: "100%" }}>
+      <div ref={wrapRef} style={{ overflow: "hidden", width: "100%", height: "100%" }}>
         <div
           ref={trackRef}
-          style={{ display: "flex", willChange: "transform" }}
+          style={{ display: "flex", willChange: "transform", height: "100%" }}
         >
           {[aerospace, ai, semiconductor].map((section, i) => (
-            <div key={i} style={{ width: "100vw", flexShrink: 0 }}>
+            <div key={i} style={{ width: "100vw", flexShrink: 0, height: "100%", overflowY: "auto", overflowX: "hidden" }}>
               {section}
             </div>
           ))}

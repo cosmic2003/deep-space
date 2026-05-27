@@ -1,4 +1,3 @@
-import { Header } from "@/components/Header";
 import { DailyDigest } from "@/components/ai/DailyDigest";
 import { ModelBenchmarks } from "@/components/ai/ModelBenchmarks";
 import { getDailyDigest, getRecentPosts } from "@/lib/ai/source";
@@ -11,13 +10,10 @@ export async function AiSector() {
   ]);
 
   const staticHeader = (
-    <>
-      <Header active="ai" />
-      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8 sm:space-y-12">
-        {digest && <DailyDigest digest={digest} />}
-        <ModelBenchmarks />
-      </div>
-    </>
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8 sm:space-y-12">
+      {digest && <DailyDigest digest={digest} />}
+      <ModelBenchmarks />
+    </div>
   );
 
   return <AiSectorClient posts={posts} staticHeader={staticHeader} />;

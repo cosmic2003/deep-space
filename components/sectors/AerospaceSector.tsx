@@ -1,4 +1,3 @@
-import { Header } from "@/components/Header";
 import { LaunchCard } from "@/components/LaunchCard";
 import { SpaceDigestSection } from "@/components/SpaceDigestSection";
 import { Starfield } from "@/components/Starfield";
@@ -19,8 +18,6 @@ export function AerospaceSector({ launches, digest }: Props) {
   return (
     <div className="aero-scope aero-bg min-h-screen">
       <Starfield />
-      <Header active="aerospace" />
-
       <main className="relative w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <section className="mb-6 sm:mb-8">
           <div className="flex items-end justify-between gap-3 sm:gap-6 mb-1 flex-wrap">

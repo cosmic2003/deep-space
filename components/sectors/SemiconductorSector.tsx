@@ -1,10 +1,8 @@
 import { ComingSoon } from "@/components/ComingSoon";
-import { Header } from "@/components/Header";
 
 export function SemiconductorSector() {
   return (
     <div className="min-h-screen text-zinc-100 relative">
-      <Header active="semiconductor" />
       <ComingSoon
         label="Semiconductor"
         title="새로운 방향 구상 중"
