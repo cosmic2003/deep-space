@@ -281,3 +281,24 @@ body {
   .sound-toggle::before,
   .sound-toggle .eq span { animation: none; }
 }
+
+/* ─── Swipe page transitions (mobile) ──────────────────────────────────── */
+html, body {
+  overflow-x: hidden;
+}
+
+@keyframes enterFromRight {
+  from { transform: translateX(100vw); }
+  to   { transform: translateX(0); }
+}
+@keyframes enterFromLeft {
+  from { transform: translateX(-100vw); }
+  to   { transform: translateX(0); }
+}
+
+.page-enter-right {
+  animation: enterFromRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.page-enter-left {
+  animation: enterFromLeft 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}

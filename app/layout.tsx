@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SoundToggle } from "@/components/SoundToggle";
-import { SwipeNavigator } from "@/components/SwipeNavigator";
+import { SwipeContainer } from "@/components/SwipeContainer";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -48,12 +48,13 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-[#202124] text-zinc-100">
-        <div className="relative z-10">
-          {children}
-          {modal}
-        </div>
+        <SwipeContainer>
+          <div className="relative z-10">
+            {children}
+            {modal}
+          </div>
+        </SwipeContainer>
         <SoundToggle />
-        <SwipeNavigator />
       </body>
     </html>
   );
