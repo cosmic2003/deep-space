@@ -8,7 +8,7 @@ export const metadata = {
 export default async function SemiconductorPage() {
   return (
     <div className="min-h-screen text-zinc-100 relative">
-      <Header active="semiconductor" />
+      <Header />
       <ComingSoon
         label="Semiconductor"
         title="새로운 방향 구상 중"

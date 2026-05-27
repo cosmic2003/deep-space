@@ -36,7 +36,7 @@ export default async function AiPage({ searchParams }: PageProps) {
 
   return (
     <div className="min-h-screen text-zinc-100">
-      <Header active="ai" />
+      <Header />
 
       <main className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8 sm:space-y-12">
         {digest && <DailyDigest digest={digest} />}
