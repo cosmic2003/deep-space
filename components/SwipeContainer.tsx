@@ -4,7 +4,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { useRef, useState, useEffect } from "react";
 
 const SECTORS = ["/", "/ai", "/semiconductor"];
-let enterDir: "right" | "left" | null = null;
 
 export function SwipeContainer({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -12,7 +11,6 @@ export function SwipeContainer({ children }: { children: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState(0);
   const [snap, setSnap] = useState(false);
-  const [enterClass, setEnterClass] = useState("");
 
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
@@ -23,17 +21,6 @@ export function SwipeContainer({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     currentIndex.current = SECTORS.indexOf(pathname);
-  }, [pathname]);
-
-  // Apply enter animation whenever pathname changes
-  useEffect(() => {
-    if (enterDir) {
-      const cls = enterDir === "right" ? "page-enter-right" : "page-enter-left";
-      setEnterClass(cls);
-      enterDir = null;
-      const t = setTimeout(() => setEnterClass(""), 350);
-      return () => clearTimeout(t);
-    }
   }, [pathname]);
 
   useEffect(() => {
@@ -54,19 +41,17 @@ export function SwipeContainer({ children }: { children: React.ReactNode }) {
       const dx = e.touches[0].clientX - touchStartX.current;
       const dy = e.touches[0].clientY - touchStartY.current;
 
-      // Decide direction on first significant movement
       if (isHoriz.current === null) {
         if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
         isHoriz.current = Math.abs(dx) > Math.abs(dy) * 1.5;
       }
 
       if (!isHoriz.current) return;
-      e.preventDefault(); // block browser scroll for horizontal swipe
+      e.preventDefault();
 
       const cur = currentIndex.current;
       const atLeft = cur <= 0 && dx > 0;
       const atRight = cur >= SECTORS.length - 1 && dx < 0;
-      // Rubber band effect at edges
       setOffset(atLeft || atRight ? dx * 0.2 : dx);
     };
 
@@ -84,13 +69,11 @@ export function SwipeContainer({ children }: { children: React.ReactNode }) {
 
       if (pass && dx < 0 && cur < SECTORS.length - 1) {
         navigating.current = true;
-        enterDir = "right";
         setOffset(0);
         router.push(SECTORS[cur + 1]);
         setTimeout(() => { navigating.current = false; }, 500);
       } else if (pass && dx > 0 && cur > 0) {
         navigating.current = true;
-        enterDir = "left";
         setOffset(0);
         router.push(SECTORS[cur - 1]);
         setTimeout(() => { navigating.current = false; }, 500);
@@ -116,13 +99,11 @@ export function SwipeContainer({ children }: { children: React.ReactNode }) {
       ref={containerRef}
       style={{
         transform: `translateX(${offset}px)`,
-        transition: snap ? "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)" : "none",
+        transition: snap ? "transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94)" : "none",
         willChange: "transform",
       }}
     >
-      <div className={enterClass}>
-        {children}
-      </div>
+      {children}
     </div>
   );
 }
