@@ -119,6 +119,9 @@ export function ModelBenchmarks() {
   const [cat, setCat] = useState<CategoryId>("swe");
   const [showRestricted, setShowRestricted] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  // Section is collapsed by default — the 8-row leaderboard is a lot of
+  // vertical real estate on mobile and most visitors won't drill in.
+  const [sectionOpen, setSectionOpen] = useState(false);
 
   const activeCat = CATEGORIES.find((c) => c.id === cat)!;
 
@@ -149,17 +152,50 @@ export function ModelBenchmarks() {
 
   return (
     <section>
-      <header className="mb-5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-400 mb-2">
-          Benchmark · Snapshot {SNAPSHOT_DATE}
-        </p>
-        <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-50">
-          모델 성능 순위
-        </h2>
-        <p className="mt-2 text-sm text-zinc-400 max-w-xl">
-          프론티어 LLM을 코딩 · 추론 · 에이전트 · 가성비 기준으로 비교.
-        </p>
-      </header>
+      <button
+        type="button"
+        onClick={() => setSectionOpen((v) => !v)}
+        aria-expanded={sectionOpen}
+        className="w-full text-left flex items-start justify-between gap-3 mb-5 group"
+      >
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-400 mb-2">
+            Benchmark · Snapshot {SNAPSHOT_DATE}
+          </p>
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-50">
+            모델 성능 순위
+          </h2>
+          <p className="mt-2 text-sm text-zinc-400 max-w-xl">
+            프론티어 LLM을 코딩 · 추론 · 에이전트 · 가성비 기준으로 비교.{" "}
+            <span className="text-zinc-500">탭하여 {sectionOpen ? "접기" : "펼치기"}</span>
+          </p>
+        </div>
+        <span
+          aria-hidden
+          className={`shrink-0 mt-2 text-zinc-500 group-hover:text-zinc-300 transition-transform duration-300 ${
+            sectionOpen ? "rotate-180" : ""
+          }`}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </span>
+      </button>
+
+      <div
+        className={`grid transition-[grid-template-rows] duration-400 ease-out ${
+          sectionOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        }`}
+      >
+        <div className="overflow-hidden">
 
       <div className="flex flex-wrap gap-1.5 mb-3">
         {CATEGORIES.map((c) => {
@@ -285,6 +321,8 @@ export function ModelBenchmarks() {
         벤치마크는 60~90일마다 뒤집힘. 위 수치는 {SNAPSHOT_DATE} 기준 수동 스냅샷이고
         자동 갱신은 안 됨. 출처: vals.ai · llm-stats.com · futureagi.
       </p>
+        </div>
+      </div>
     </section>
   );
 }
