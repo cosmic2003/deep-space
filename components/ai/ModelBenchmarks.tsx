@@ -42,6 +42,18 @@ const CATEGORIES: Category[] = [
   { id: "value", label: "가성비", desc: "지능 지수 / 출력 가격" },
 ];
 
+// Score for a model under a given category. Returns null when AA doesn't
+// publish that metric for the model (e.g. the math index, deprecated in the
+// Intelligence Index v4.0 overhaul, comes back null for current frontier
+// models) — such categories are hidden from the tab bar entirely.
+function valueOf(m: BenchmarkModel, c: CategoryId): number | null {
+  if (c === "value") {
+    if (!m.outPrice || m.intelligence == null) return null;
+    return m.intelligence / m.outPrice;
+  }
+  return m[c];
+}
+
 function fmtSnapshot(iso: string | null): string {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -64,20 +76,26 @@ export function ModelBenchmarks({
   // estate on mobile and most visitors won't drill in.
   const [sectionOpen, setSectionOpen] = useState(false);
 
-  const activeCat = CATEGORIES.find((c) => c.id === cat)!;
+  // Only show categories AA actually has data for, so a fully-empty metric
+  // (e.g. math) never renders as a column of "—". Intelligence is always
+  // present (the poll script filters to models that have it).
+  const availableCategories = useMemo(
+    () => CATEGORIES.filter((c) => models.some((m) => valueOf(m, c.id) != null)),
+    [models]
+  );
+
+  // The selected tab can only be one the user clicked, and those are always in
+  // availableCategories; fall back to the first available just in case.
+  const effectiveCat = availableCategories.some((c) => c.id === cat)
+    ? cat
+    : availableCategories[0]?.id ?? "intelligence";
+  const activeCat = CATEGORIES.find((c) => c.id === effectiveCat)!;
 
   const ranked = useMemo(() => {
-    const getVal = (m: BenchmarkModel): number | null => {
-      if (cat === "value") {
-        if (!m.outPrice || m.intelligence == null) return null;
-        return m.intelligence / m.outPrice;
-      }
-      return m[cat];
-    };
     return models
-      .map((m) => ({ ...m, _val: getVal(m) }))
+      .map((m) => ({ ...m, _val: valueOf(m, effectiveCat) }))
       .sort((a, b) => (b._val ?? -1) - (a._val ?? -1));
-  }, [models, cat]);
+  }, [models, effectiveCat]);
 
   const maxVal = Math.max(
     ...ranked.map((m) => m._val ?? 0).filter((v) => v > 0),
@@ -145,8 +163,8 @@ export function ModelBenchmarks({
           ) : (
             <>
               <div className="flex flex-wrap gap-1.5 mb-3">
-                {CATEGORIES.map((c) => {
-                  const active = cat === c.id;
+                {availableCategories.map((c) => {
+                  const active = effectiveCat === c.id;
                   return (
                     <button
                       key={c.id}
@@ -211,7 +229,7 @@ export function ModelBenchmarks({
                           >
                             {fmtVal(m._val)}
                           </span>
-                          {cat === "value" && (
+                          {effectiveCat === "value" && (
                             <span className="font-mono text-[10px] text-zinc-500">
                               점/$
                             </span>
