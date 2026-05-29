@@ -71,7 +71,12 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
   // 헤더 클릭 등 Next.js 라우터 이동 시 동기화
   useEffect(() => {
     if (searchParams.size > 0) return;
-    slideTo(pathToIndex(pathname), true);
+    const target = pathToIndex(pathname);
+    // Skip when the URL change came from our own swipe (pushState) — the track
+    // is already at/animating to `target`, and re-sliding mid-snap re-writes the
+    // transition + re-renders right as the animation starts, dropping frames.
+    if (target === curIdx.current) return;
+    slideTo(target, true);
   }, [pathname, searchParams]);
 
   // 브라우저 뒤로/앞으로
@@ -106,14 +111,16 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
       setSwiping(true); // keep effects suppressed during the finger-follow too
 
       const cur = curIdx.current;
-      const base = -cur * window.innerWidth;
       const rubber = (cur <= 0 && dx > 0) || (cur >= SECTORS.length - 1 && dx < 0);
       const offset = rubber ? dx * 0.2 : dx;
 
       const el = trackRef.current;
       if (!el) return;
       el.style.transition = "none";
-      el.style.transform = `translateX(${base + offset}px)`;
+      // Base in vw (matches the snap target unit in slideTo), finger delta in
+      // px. Same unit basis = the release snap continues from the exact on-screen
+      // position with no recompute/jump.
+      el.style.transform = `translateX(calc(${-cur * 100}vw + ${offset}px))`;
     };
 
     const onEnd = (e: TouchEvent) => {
