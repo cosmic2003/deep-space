@@ -5,12 +5,15 @@ import { usePathname, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 
 const SECTORS = ["/", "/ai", "/semiconductor"];
-const EASE = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+const SNAP_MS = 300;
 
 function pathToIndex(pathname: string) {
   const idx = SECTORS.indexOf(pathname);
   return idx >= 0 ? idx : 0;
 }
+
+// easeOutCubic — snappy settle, close to the old cubic-bezier curve.
+const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
 interface Props {
   children: ReactNode;       // page.tsx 출력 (search params 있을 때 폴백)
@@ -30,11 +33,12 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
   const touchStartY = useRef(0);
   const touchStartTime = useRef(0);
   const isHoriz = useRef<boolean | null>(null);
+  const rafId = useRef<number | null>(null);
   const swipeEndTimer = useRef<number | null>(null);
 
   // Toggle `body.is-swiping` so CSS can drop blur/shadow/star animations while
-  // the track is moving (see globals.css). `on=false` defers removal until just
-  // after the 0.3s snap transition so effects don't pop back mid-animation.
+  // the track is moving (see globals.css). `on=false` defers removal so effects
+  // don't re-raster mid-animation.
   const setSwiping = (on: boolean) => {
     if (on) {
       if (swipeEndTimer.current) {
@@ -47,31 +51,85 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
       swipeEndTimer.current = window.setTimeout(() => {
         document.body.classList.remove("is-swiping");
         swipeEndTimer.current = null;
-      }, 340);
+      }, 60);
     }
   };
 
-  // Run after the browser has painted, so the transition's first (main-thread)
-  // frame isn't blocked by the React re-renders our side effects trigger
-  // (header highlight via `sectorchange`, pathname via pushState). The transform
-  // animation is compositor-driven, so work landing mid-animation is harmless —
-  // only the start frame is sensitive, which is what caused the release hitch.
-  const afterPaint = (fn: () => void) => {
-    requestAnimationFrame(() => requestAnimationFrame(fn));
+  const cancelAnim = () => {
+    if (rafId.current != null) {
+      cancelAnimationFrame(rafId.current);
+      rafId.current = null;
+    }
   };
 
-  const slideTo = (index: number, animated: boolean) => {
+  // Current on-screen translateX in px, read from the live transform matrix.
+  const currentX = (el: HTMLElement): number => {
+    const tr = getComputedStyle(el).transform;
+    if (!tr || tr === "none") return -curIdx.current * window.innerWidth;
+    try {
+      return new DOMMatrix(tr).m41;
+    } catch {
+      return -curIdx.current * window.innerWidth;
+    }
+  };
+
+  const setX = (el: HTMLElement, px: number) => {
+    el.style.transform = `translateX(${px}px)`;
+  };
+
+  // Settle into vw so the resting position survives viewport/orientation changes.
+  const settle = (el: HTMLElement, index: number) => {
+    el.style.transform = `translateX(${-index * 100}vw)`;
+  };
+
+  // Snap to a sector. The animation is a per-frame JS tween (the exact path the
+  // finger-drag uses, which is smooth) rather than a CSS transition — switching
+  // from JS-driven transform to a CSS transition makes iOS re-raster the layer
+  // on the first frame, which was the single hitch on release. All React-
+  // triggering side effects (header highlight, URL) run only AFTER the tween, so
+  // nothing competes for the main thread while it animates.
+  const slideTo = (index: number, animated: boolean, pushUrl = false) => {
     const el = trackRef.current;
     if (!el) return;
-    if (animated) setSwiping(true);
-    el.style.transition = animated ? `transform 0.3s ${EASE}` : "none";
-    el.style.transform = `translateX(${-index * 100}vw)`;
+    cancelAnim();
+    el.style.transition = "none";
     curIdx.current = index;
-    if (animated) setSwiping(false);
-    const notify = () =>
+
+    const done = () => {
+      settle(el, index);
+      setSwiping(false);
       window.dispatchEvent(new CustomEvent("sectorchange", { detail: SECTORS[index] }));
-    if (animated) afterPaint(notify);
-    else notify();
+      if (pushUrl) window.history.pushState(null, "", SECTORS[index]);
+    };
+
+    if (!animated) {
+      settle(el, index);
+      window.dispatchEvent(new CustomEvent("sectorchange", { detail: SECTORS[index] }));
+      return;
+    }
+
+    setSwiping(true);
+    const startX = currentX(el);
+    const targetX = -index * window.innerWidth;
+    const dist = targetX - startX;
+    if (Math.abs(dist) < 0.5) {
+      done();
+      return;
+    }
+
+    let startTs = 0;
+    const step = (ts: number) => {
+      if (!startTs) startTs = ts;
+      const p = Math.min(1, (ts - startTs) / SNAP_MS);
+      setX(el, startX + dist * easeOut(p));
+      if (p < 1) {
+        rafId.current = requestAnimationFrame(step);
+      } else {
+        rafId.current = null;
+        done();
+      }
+    };
+    rafId.current = requestAnimationFrame(step);
   };
 
   // 초기 위치 (하이드레이션 후 즉시)
@@ -84,9 +142,7 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
   useEffect(() => {
     if (searchParams.size > 0) return;
     const target = pathToIndex(pathname);
-    // Skip when the URL change came from our own swipe (pushState) — the track
-    // is already at/animating to `target`, and re-sliding mid-snap re-writes the
-    // transition + re-renders right as the animation starts, dropping frames.
+    // Skip when the URL change came from our own swipe — we're already there.
     if (target === curIdx.current) return;
     slideTo(target, true);
   }, [pathname, searchParams]);
@@ -96,6 +152,7 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
     const onPop = () => slideTo(pathToIndex(window.location.pathname), true);
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 스와이프
@@ -104,6 +161,7 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
     if (!wrap) return;
 
     const onStart = (e: TouchEvent) => {
+      cancelAnim(); // grab an in-flight snap so the new drag takes over cleanly
       touchStartX.current = e.touches[0].clientX;
       touchStartY.current = e.touches[0].clientY;
       touchStartTime.current = Date.now();
@@ -120,7 +178,7 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
       }
       if (!isHoriz.current) return;
       e.preventDefault();
-      setSwiping(true); // keep effects suppressed during the finger-follow too
+      setSwiping(true);
 
       const cur = curIdx.current;
       const rubber = (cur <= 0 && dx > 0) || (cur >= SECTORS.length - 1 && dx < 0);
@@ -129,10 +187,7 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
       const el = trackRef.current;
       if (!el) return;
       el.style.transition = "none";
-      // Base in vw (matches the snap target unit in slideTo), finger delta in
-      // px. Same unit basis = the release snap continues from the exact on-screen
-      // position with no recompute/jump.
-      el.style.transform = `translateX(calc(${-cur * 100}vw + ${offset}px))`;
+      setX(el, -cur * window.innerWidth + offset);
     };
 
     const onEnd = (e: TouchEvent) => {
@@ -145,13 +200,9 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
       const cur = curIdx.current;
 
       if (pass && dx < 0 && cur < SECTORS.length - 1) {
-        const next = cur + 1;
-        slideTo(next, true);
-        afterPaint(() => window.history.pushState(null, "", SECTORS[next]));
+        slideTo(cur + 1, true, true);
       } else if (pass && dx > 0 && cur > 0) {
-        const prev = cur - 1;
-        slideTo(prev, true);
-        afterPaint(() => window.history.pushState(null, "", SECTORS[prev]));
+        slideTo(cur - 1, true, true);
       } else {
         slideTo(cur, true); // 스냅백
       }
@@ -164,9 +215,11 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
       wrap.removeEventListener("touchstart", onStart);
       wrap.removeEventListener("touchmove", onMove);
       wrap.removeEventListener("touchend", onEnd);
+      cancelAnim();
       if (swipeEndTimer.current) clearTimeout(swipeEndTimer.current);
       document.body.classList.remove("is-swiping");
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // company 필터 등 search params 있을 땐 일반 페이지 렌더
