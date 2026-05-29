@@ -51,6 +51,15 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
     }
   };
 
+  // Run after the browser has painted, so the transition's first (main-thread)
+  // frame isn't blocked by the React re-renders our side effects trigger
+  // (header highlight via `sectorchange`, pathname via pushState). The transform
+  // animation is compositor-driven, so work landing mid-animation is harmless —
+  // only the start frame is sensitive, which is what caused the release hitch.
+  const afterPaint = (fn: () => void) => {
+    requestAnimationFrame(() => requestAnimationFrame(fn));
+  };
+
   const slideTo = (index: number, animated: boolean) => {
     const el = trackRef.current;
     if (!el) return;
@@ -59,7 +68,10 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
     el.style.transform = `translateX(${-index * 100}vw)`;
     curIdx.current = index;
     if (animated) setSwiping(false);
-    window.dispatchEvent(new CustomEvent("sectorchange", { detail: SECTORS[index] }));
+    const notify = () =>
+      window.dispatchEvent(new CustomEvent("sectorchange", { detail: SECTORS[index] }));
+    if (animated) afterPaint(notify);
+    else notify();
   };
 
   // 초기 위치 (하이드레이션 후 즉시)
@@ -135,11 +147,11 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
       if (pass && dx < 0 && cur < SECTORS.length - 1) {
         const next = cur + 1;
         slideTo(next, true);
-        window.history.pushState(null, "", SECTORS[next]);
+        afterPaint(() => window.history.pushState(null, "", SECTORS[next]));
       } else if (pass && dx > 0 && cur > 0) {
         const prev = cur - 1;
         slideTo(prev, true);
-        window.history.pushState(null, "", SECTORS[prev]);
+        afterPaint(() => window.history.pushState(null, "", SECTORS[prev]));
       } else {
         slideTo(cur, true); // 스냅백
       }
