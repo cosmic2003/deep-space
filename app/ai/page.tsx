@@ -3,7 +3,7 @@ import { DailyDigest } from "@/components/ai/DailyDigest";
 import { ModelBenchmarks } from "@/components/ai/ModelBenchmarks";
 import { PostCard } from "@/components/ai/PostCard";
 import { Header } from "@/components/Header";
-import { getDailyDigest, getRecentPosts } from "@/lib/ai/source";
+import { getDailyDigest, getModelBenchmarks, getRecentPosts } from "@/lib/ai/source";
 import type { AICompany } from "@/lib/ai/types";
 import { COMPANIES, COMPANY_MAP } from "@/lib/ai/types";
 
@@ -26,9 +26,10 @@ export default async function AiPage({ searchParams }: PageProps) {
       ? (rawCompany as AICompany)
       : undefined;
 
-  const [posts, digest] = await Promise.all([
+  const [posts, digest, benchmarks] = await Promise.all([
     getRecentPosts({ company, limit: 30 }),
     getDailyDigest(),
+    getModelBenchmarks(),
   ]);
 
   const now = Date.now();
@@ -41,7 +42,10 @@ export default async function AiPage({ searchParams }: PageProps) {
       <main className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8 sm:space-y-12">
         {digest && <DailyDigest digest={digest} />}
 
-        <ModelBenchmarks />
+        <ModelBenchmarks
+          models={benchmarks.models}
+          snapshotDate={benchmarks.snapshotDate}
+        />
 
         <section>
           <header className="flex items-end justify-between gap-3 sm:gap-6 mb-5 sm:mb-6 flex-wrap">

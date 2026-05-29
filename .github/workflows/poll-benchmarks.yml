@@ -1,0 +1,37 @@
+name: Poll model benchmarks
+
+on:
+  schedule:
+    # Once a day. The Artificial Analysis leaderboard moves slowly (new model
+    # every few days at most), and the free tier is request-limited, so daily
+    # is plenty. Use the "Run workflow" button for an immediate refresh.
+    - cron: "30 6 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: poll-benchmarks
+  cancel-in-progress: false
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refresh benchmarks in Supabase
+        run: npm run poll-benchmarks
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          AA_API_KEY: ${{ secrets.AA_API_KEY }}
