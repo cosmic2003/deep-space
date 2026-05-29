@@ -30,13 +30,35 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
   const touchStartY = useRef(0);
   const touchStartTime = useRef(0);
   const isHoriz = useRef<boolean | null>(null);
+  const swipeEndTimer = useRef<number | null>(null);
+
+  // Toggle `body.is-swiping` so CSS can drop blur/shadow/star animations while
+  // the track is moving (see globals.css). `on=false` defers removal until just
+  // after the 0.3s snap transition so effects don't pop back mid-animation.
+  const setSwiping = (on: boolean) => {
+    if (on) {
+      if (swipeEndTimer.current) {
+        clearTimeout(swipeEndTimer.current);
+        swipeEndTimer.current = null;
+      }
+      document.body.classList.add("is-swiping");
+    } else {
+      if (swipeEndTimer.current) clearTimeout(swipeEndTimer.current);
+      swipeEndTimer.current = window.setTimeout(() => {
+        document.body.classList.remove("is-swiping");
+        swipeEndTimer.current = null;
+      }, 340);
+    }
+  };
 
   const slideTo = (index: number, animated: boolean) => {
     const el = trackRef.current;
     if (!el) return;
+    if (animated) setSwiping(true);
     el.style.transition = animated ? `transform 0.3s ${EASE}` : "none";
     el.style.transform = `translateX(${-index * 100}vw)`;
     curIdx.current = index;
+    if (animated) setSwiping(false);
     window.dispatchEvent(new CustomEvent("sectorchange", { detail: SECTORS[index] }));
   };
 
@@ -81,6 +103,7 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
       }
       if (!isHoriz.current) return;
       e.preventDefault();
+      setSwiping(true); // keep effects suppressed during the finger-follow too
 
       const cur = curIdx.current;
       const base = -cur * window.innerWidth;
@@ -122,6 +145,8 @@ export function SectorCarouselClient({ children, aerospace, ai, semiconductor, m
       wrap.removeEventListener("touchstart", onStart);
       wrap.removeEventListener("touchmove", onMove);
       wrap.removeEventListener("touchend", onEnd);
+      if (swipeEndTimer.current) clearTimeout(swipeEndTimer.current);
+      document.body.classList.remove("is-swiping");
     };
   }, []);
 

@@ -74,7 +74,15 @@ body {
     radial-gradient(ellipse 80% 50% at 70% -10%, rgba(50, 70, 140, 0.22), transparent),
     radial-gradient(ellipse 60% 40% at 10% 110%, rgba(90, 50, 140, 0.18), transparent),
     #06080f;
-  background-attachment: fixed;
+}
+
+/* `background-attachment: fixed` is a heavy repaint on mobile (jank during both
+   vertical scroll and the horizontal sector swipe). Restrict the parallax to
+   pointer devices; touch gets a normal scrolling background it can cache. */
+@media (hover: hover) and (pointer: fine) {
+  .aero-bg {
+    background-attachment: fixed;
+  }
 }
 
 .aero-glass {
@@ -285,4 +293,20 @@ body {
 /* ─── Swipe page transitions (mobile) ──────────────────────────────────── */
 html, body {
   overflow-x: hidden;
+}
+
+/* While a sector swipe is in flight, the whole track translates every frame.
+   backdrop-filter blur, big shadows, and the twinkling starfield each force a
+   full re-raster per frame and tank the FPS on iOS. Suppress them for the
+   ~0.3s the gesture lasts — imperceptible during motion, smooth on release.
+   SectorCarouselClient toggles `body.is-swiping`. */
+body.is-swiping .aero-glass,
+body.is-swiping .aero-pill,
+body.is-swiping .aero-badge {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+body.is-swiping .twinkle {
+  animation-play-state: paused;
 }
